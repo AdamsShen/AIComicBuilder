@@ -41,12 +41,16 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
           password,
           name: email.split("@")[0],
         });
-        setSent(false); // 注册成功后自动登录不需要验证邮件
+        // 注册后 Better Auth 自动登录；清除注册标记后登录
+        setIsSignUp(false);
       }
-      await signIn.email({
-        email,
-        password,
-      });
+      // ⚠ 只有当没有已登录 session 时才显式登录；注册成功后 Better Auth 已经创建了 session
+      if (!isSignUp) {
+        await signIn.email({
+          email,
+          password,
+        });
+      }
       setSent(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

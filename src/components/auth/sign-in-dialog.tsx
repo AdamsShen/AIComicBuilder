@@ -57,8 +57,9 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
       if (signInResult.error) {
         throw new Error(signInResult.error.message || "Login failed");
       }
-      // 登录成功，直接关弹窗刷新
+      // 登录成功，关弹窗并刷新页面以加载 session
       handleClose(false);
+      window.location.reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

@@ -41,6 +41,7 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
           password,
           name: email.split("@")[0],
         });
+        setSent(false); // 注册成功后自动登录不需要验证邮件
       }
       await signIn.email({
         email,
@@ -59,6 +60,9 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
     if (!open) {
       setSent(false);
       setError(null);
+      setEmail("");
+      setPassword("");
+      setIsSignUp(false);
     }
     onOpenChange(open);
   }

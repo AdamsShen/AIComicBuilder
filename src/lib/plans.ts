@@ -1,6 +1,6 @@
 export const PLANS = {
   free: {
-    nameKey: "pricing.free.name",
+    nameKey: "pricing.free.name" as const,
     priceMonthly: 0,
     priceYearly: 0,
     features: [
@@ -9,12 +9,13 @@ export const PLANS = {
       "pricing.free.feature3",
       "pricing.free.feature4",
     ],
-    cta: "pricing.free.cta",
+    cta: "pricing.free.cta" as const,
     priceIdMonthly: null as string | null,
     priceIdYearly: null as string | null,
+    highlight: false,
   },
   pro: {
-    nameKey: "pricing.pro.name",
+    nameKey: "pricing.pro.name" as const,
     priceMonthly: 19,
     priceYearly: 190,
     features: [
@@ -25,9 +26,9 @@ export const PLANS = {
       "pricing.pro.feature5",
       "pricing.pro.feature6",
     ],
-    cta: "pricing.pro.cta",
-    priceIdMonthly: process.env.STRIPE_MONTHLY_PRICE_ID,
-    priceIdYearly: process.env.STRIPE_YEARLY_PRICE_ID,
+    cta: "pricing.pro.cta" as const,
+    priceIdMonthly: process.env.STRIPE_MONTHLY_PRICE_ID || null,
+    priceIdYearly: process.env.STRIPE_YEARLY_PRICE_ID || null,
     highlight: true,
   },
 };

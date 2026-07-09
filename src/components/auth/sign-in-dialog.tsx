@@ -36,22 +36,29 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
 
     try {
       if (isSignUp) {
-        await signUp.email({
+        const signUpResult = await signUp.email({
           email,
           password,
           name: email.split("@")[0],
         });
-        // 注册后 Better Auth 自动登录；清除注册标记后登录
-        setIsSignUp(false);
+        // 注册失败时直接显示错误
+        if (signUpResult.error) {
+          throw new Error(signUpResult.error.message || "Registration failed");
+        }
+        // 注册成功，Better Auth 自动创建 session，直接关弹窗
+        handleClose(false);
+        return;
       }
-      // ⚠ 只有当没有已登录 session 时才显式登录；注册成功后 Better Auth 已经创建了 session
-      if (!isSignUp) {
-        await signIn.email({
-          email,
-          password,
-        });
+
+      const signInResult = await signIn.email({
+        email,
+        password,
+      });
+      if (signInResult.error) {
+        throw new Error(signInResult.error.message || "Login failed");
       }
-      setSent(true);
+      // 登录成功，直接关弹窗刷新
+      handleClose(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

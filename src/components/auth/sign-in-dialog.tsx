@@ -45,8 +45,9 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
         if (signUpResult.error) {
           throw new Error(signUpResult.error.message || "Registration failed");
         }
-        // 注册成功，Better Auth 自动创建 session，直接关弹窗
+        // 注册成功，Better Auth 自动创建 session，跳转项目列表
         handleClose(false);
+        window.location.href = "/";
         return;
       }
 
@@ -57,9 +58,9 @@ export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
       if (signInResult.error) {
         throw new Error(signInResult.error.message || "Login failed");
       }
-      // 登录成功，关弹窗并刷新页面以加载 session
+      // 登录成功，跳转到项目列表
       handleClose(false);
-      window.location.reload();
+      window.location.href = "/";
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

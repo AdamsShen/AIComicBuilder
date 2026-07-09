@@ -518,7 +518,6 @@
       "durationStrategy": "Duration Strategy",
       "durationStrategyDesc": "Description-granularity rules tiered by shot duration"
     }
-  }
   },
   "pricing": {
     "title": "Choose Your Plan",

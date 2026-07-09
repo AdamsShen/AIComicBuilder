@@ -18,7 +18,9 @@
     "batchPartialFailed": "一部のアイテムの生成に失敗しました。後でもう一度お試しください。",
     "promptTemplates": "プロンプト管理",
     "upload": "アップロード",
-    "uploadFailed": "アップロードに失敗しました。もう一度お試しください。"
+    "uploadFailed": "アップロードに失敗しました。もう一度お試しください。",
+    "pricing": "料金",
+    "signIn": "ログイン"
   },
   "dashboard": {
     "title": "マイプロジェクト",
@@ -516,5 +518,64 @@
       "durationStrategy": "尺戦略",
       "durationStrategyDesc": "ショット尺に応じた記述粒度のルール"
     }
+  },
+  "pricing": {
+    "title": "プランを選択",
+    "subtitle": "無料で始めて、必要に応じてアップグレード。",
+    "monthly": "月払い",
+    "yearly": "年払い",
+    "savePercent": "{percent}%節約",
+    "popular": "人気",
+    "freePrice": "無料",
+    "perMonth": "/月",
+    "perYear": "/年",
+    "billedAnnually": "年額請求",
+    "free": {
+      "name": "無料版",
+      "price": "無料",
+      "feature1": "最大3プロジェクト",
+      "feature2": "基本AIモデル",
+      "feature3": "720p動画出力",
+      "feature4": "コミュニティサポート",
+      "cta": "無料で始める"
+    },
+    "pro": {
+      "name": "プロ版",
+      "priceMonthly": "$19",
+      "priceYearly": "$190",
+      "feature1": "無制限プロジェクト",
+      "feature2": "全AIモデル",
+      "feature3": "1080p動画出力",
+      "feature4": "優先生成キュー",
+      "feature5": "バッチフレーム生成",
+      "feature6": "メールサポート",
+      "cta": "今すぐ購読"
+    },
+    "faq": {
+      "title": "よくある質問",
+      "q1": "いつでも解約できますか？",
+      "a1": "はい、請求設定からいつでも解約できます。現在の請求期間が終了するまで引き続きアクセスできます。",
+      "q2": "ダウングレードするとプロジェクトはどうなりますか？",
+      "a2": "プロジェクトは完全に保持されます。無料枠を超える新規プロジェクトはアップグレードするまで作成できません。",
+      "q3": "返金は可能ですか？",
+      "a3": "新規登録者向けに7日間の返金保証を提供しています。初回支払いから7日以内にお問い合わせください。"
+    }
+  },
+  "auth": {
+    "signIn": "ログイン",
+    "signOut": "ログアウト",
+    "createAccount": "アカウント作成",
+    "signInDesc": "メールアドレスを入力してログイン。",
+    "createAccountDesc": "プロジェクト保存と購読のためアカウントを作成。",
+    "email": "メールアドレス",
+    "emailPlaceholder": "you@example.com",
+    "password": "パスワード",
+    "checkEmail": "メールを確認してください",
+    "checkEmailDesc": "確認リンクをメールで送信しました。（開発モードではサーバーコンソールを確認してください。）",
+    "done": "完了",
+    "noAccount": "アカウントをお持ちでない方",
+    "haveAccount": "すでにアカウントをお持ちの方",
+    "billing": "請求管理",
+    "manageSubscription": "サブスクリプション管理"
   }
 }

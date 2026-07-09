@@ -18,6 +18,8 @@
     "batchPartialFailed": "Some items failed to generate. Please try again.",
     "promptTemplates": "Prompt Templates",
     "upload": "Upload",
+    "pricing": "Pricing",
+    "signIn": "Sign In",
     "uploadFailed": "Upload failed. Please try again."
   },
   "dashboard": {
@@ -516,5 +518,65 @@
       "durationStrategy": "Duration Strategy",
       "durationStrategyDesc": "Description-granularity rules tiered by shot duration"
     }
+  }
+  },
+  "pricing": {
+    "title": "Choose Your Plan",
+    "subtitle": "Start free, upgrade when you need more power.",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "savePercent": "Save {percent}%",
+    "popular": "Most Popular",
+    "freePrice": "Free",
+    "perMonth": "mo",
+    "perYear": "yr",
+    "billedAnnually": "billed annually",
+    "free": {
+      "name": "Free",
+      "price": "Free",
+      "feature1": "Up to 3 projects",
+      "feature2": "Basic AI models",
+      "feature3": "720p video export",
+      "feature4": "Community support",
+      "cta": "Get Started"
+    },
+    "pro": {
+      "name": "Pro",
+      "priceMonthly": "$19",
+      "priceYearly": "$190",
+      "feature1": "Unlimited projects",
+      "feature2": "All AI models (GPT-4o, Claude, Gemini)",
+      "feature3": "1080p video export",
+      "feature4": "Priority generation queue",
+      "feature5": "Batch frame generation",
+      "feature6": "Email support",
+      "cta": "Subscribe Now"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "q1": "Can I cancel anytime?",
+      "a1": "Yes, you can cancel your subscription at any time from your billing settings. You will continue to have access until the end of your billing period.",
+      "q2": "What happens to my projects if I downgrade?",
+      "a2": "Your projects remain fully accessible. You just can't create new projects beyond the free tier limit until you upgrade again.",
+      "q3": "Do you offer refunds?",
+      "a3": "We offer a 7-day money-back guarantee for new subscribers. Contact us within 7 days of your first payment for a full refund."
+    }
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "createAccount": "Create Account",
+    "signInDesc": "Enter your email to sign in or get a magic link.",
+    "createAccountDesc": "Create an account to save your projects and subscribe.",
+    "email": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "checkEmail": "Check your email for the sign-in link.",
+    "checkEmailDesc": "We sent a verification link to your email. Click it to sign in. (In dev mode, check the server console.)",
+    "done": "Done",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "billing": "Billing",
+    "manageSubscription": "Manage Subscription"
   }
 }

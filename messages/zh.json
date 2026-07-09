@@ -18,7 +18,9 @@
     "batchPartialFailed": "部分项目生成失败，请稍后重试",
     "promptTemplates": "提示词管理",
     "upload": "上传",
-    "uploadFailed": "上传失败，请重试"
+    "uploadFailed": "上传失败，请重试",
+    "pricing": "定价",
+    "signIn": "登录"
   },
   "dashboard": {
     "title": "我的项目",
@@ -168,9 +170,8 @@
     "refImagePrompt": "参考图提示词...",
     "noRefImages": "暂无参考图提示词",
     "noKeyframes": "暂无首尾帧提示词",
-    "refChars": "镜头角色",
-    "generateRefImages": "生成参考图",
     "refChars": "角色",
+    "generateRefImages": "生成参考图",
     "regenerateRefImages": "重新生成参考图",
     "maxRefImages": "最多9张参考图",
     "transition": "转场",
@@ -518,5 +519,64 @@
       "durationStrategy": "时长策略",
       "durationStrategyDesc": "按镜头时长分级的描述颗粒度规则"
     }
+  },
+  "pricing": {
+    "title": "选择适合你的方案",
+    "subtitle": "免费开始，需要更多功能时升级。",
+    "monthly": "月付",
+    "yearly": "年付",
+    "savePercent": "省 {percent}%",
+    "popular": "最受欢迎",
+    "freePrice": "免费",
+    "perMonth": "/月",
+    "perYear": "/年",
+    "billedAnnually": "按年计费",
+    "free": {
+      "name": "免费版",
+      "price": "免费",
+      "feature1": "最多 3 个项目",
+      "feature2": "基础 AI 模型",
+      "feature3": "720p 视频导出",
+      "feature4": "社区支持",
+      "cta": "免费开始"
+    },
+    "pro": {
+      "name": "专业版",
+      "priceMonthly": "¥19",
+      "priceYearly": "¥190",
+      "feature1": "无限项目",
+      "feature2": "全部 AI 模型（GPT-4o、Claude、Gemini）",
+      "feature3": "1080p 视频导出",
+      "feature4": "优先生成队列",
+      "feature5": "批量帧生成",
+      "feature6": "邮件支持",
+      "cta": "立即订阅"
+    },
+    "faq": {
+      "title": "常见问题",
+      "q1": "可以随时取消吗？",
+      "a1": "可以，你可以随时在账单设置中取消订阅。取消后在当前计费周期结束前仍可继续使用。",
+      "q2": "降级后我的项目会怎样？",
+      "a2": "你的项目完全保留可访问。只是不能创建超过免费版限额的新项目，直到你重新升级。",
+      "q3": "支持退款吗？",
+      "a3": "我们为新用户提供 7 天无理由退款保证。首次支付后 7 天内联系我们即可全额退款。"
+    }
+  },
+  "auth": {
+    "signIn": "登录",
+    "signOut": "退出登录",
+    "createAccount": "创建账户",
+    "signInDesc": "输入邮箱登录或获取验证链接。",
+    "createAccountDesc": "创建账户以保存项目和订阅。",
+    "email": "邮箱地址",
+    "emailPlaceholder": "you@example.com",
+    "password": "密码",
+    "checkEmail": "请查看邮箱中的登录链接",
+    "checkEmailDesc": "验证链接已发送到你的邮箱。点击链接即可登录。（开发模式下请查看服务端控制台。）",
+    "done": "完成",
+    "noAccount": "还没有账户？",
+    "haveAccount": "已有账户？",
+    "billing": "账单管理",
+    "manageSubscription": "管理订阅"
   }
 }

@@ -4,6 +4,7 @@ interface ListRequest {
   protocol: string;
   baseUrl: string;
   apiKey: string;
+  capability?: string;  // "text" | "image" | "video"
 }
 
 interface ModelItem {
@@ -115,6 +116,83 @@ export async function POST(request: Request) {
           { id: "qwen-image-max", name: "Qwen Image Max" },
           { id: "qwen-image-plus", name: "Qwen Image Plus" },
           { id: "z-image-turbo", name: "Z-Image Turbo" },
+        ],
+      });
+    }
+
+    if (body.protocol === "fal") {
+      const isText = body.capability === "text";
+      const isImage = body.capability === "image";
+      const isVideo = body.capability === "video";
+
+      // fal.ai 文本模型（通过 OpenRouter 端点，兼容 OpenAI 聊天格式）
+      // 模型来源: https://fal.ai/models/openrouter/router/enterprise/llms.txt
+      if (isText) {
+        return NextResponse.json({
+          models: [
+            { id: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5（推荐·支持视觉）" },
+            { id: "anthropic/claude-opus-4.6", name: "Claude Opus 4.6（支持视觉）" },
+            { id: "anthropic/claude-sonnet-4.6", name: "Claude Sonnet 4.6（支持视觉）" },
+            { id: "anthropic/claude-opus-4.5", name: "Claude Opus 4.5（支持视觉）" },
+            { id: "anthropic/claude-haiku-4.5", name: "Claude Haiku 4.5（支持视觉）" },
+            { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro（支持视觉）" },
+            { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash（支持视觉）" },
+            { id: "google/gemini-2.5-flash-preview-09-2025", name: "Gemini 2.5 Flash（支持视觉）" },
+            { id: "google/gemini-3.1-pro-preview", name: "Gemini 3.1 Pro（支持视觉）" },
+            { id: "deepseek/deepseek-v3.2", name: "DeepSeek V3.2" },
+            { id: "z-ai/glm-4.7", name: "GLM 4.7（支持视觉）" },
+            { id: "nvidia/llama-3.3-nemotron-super-49b-v1.5", name: "Llama 3.3 Nemotron 49B" },
+            { id: "mistralai/ministral-14b-2512", name: "Ministral 14B" },
+            { id: "moonshotai/kimi-k2.5", name: "Kimi K2.5" },
+          ],
+        });
+      }
+
+      // fal.ai 图片模型（同步模式: https://fal.run/{model_id}）
+      if (isImage) {
+        return NextResponse.json({
+          models: [
+            { id: "fal-ai/flux-2-pro", name: "Flux 2 Pro（推荐）" },
+            { id: "fal-ai/flux-pro/v1.1-ultra", name: "Flux Pro v1.1 Ultra" },
+            { id: "fal-ai/flux/dev", name: "Flux Dev" },
+            { id: "fal-ai/flux/schnell", name: "Flux Schnell（极速）" },
+            { id: "fal-ai/recraft-v3", name: "Recraft V3" },
+            { id: "fal-ai/stable-diffusion-v3.5-medium", name: "SD 3.5 Medium" },
+            { id: "fal-ai/ideogram/v3", name: "Ideogram V3" },
+            { id: "fal-ai/hyper-flux-8bit", name: "Hyper Flux 8bit（极速版）" },
+          ],
+        });
+      }
+
+      // fal.ai 视频模型（队列模式: https://queue.fal.run/{model_id}）
+      if (isVideo) {
+        return NextResponse.json({
+          models: [
+            { id: "bytedance/seedance-2.0/image-to-video", name: "Seedance 2.0 图生视频（推荐）" },
+            { id: "bytedance/seedance-2.0/text-to-video", name: "Seedance 2.0 文生视频" },
+            { id: "bytedance/seedance-2.0/reference-to-video", name: "Seedance 2.0 参考生视频" },
+            { id: "bytedance/seedance-2.0/fast/image-to-video", name: "Seedance 2.0 Fast 图生视频" },
+            { id: "bytedance/seedance-2.0/fast/text-to-video", name: "Seedance 2.0 Fast 文生视频" },
+            { id: "bytedance/seedance-2.0/fast/reference-to-video", name: "Seedance 2.0 Fast 参考生视频" },
+            { id: "fal-ai/sora-2/image-to-video", name: "Sora 2 图生视频" },
+            { id: "fal-ai/sora-2/text-to-video", name: "Sora 2 文生视频" },
+            { id: "fal-ai/wan2.1-i2v", name: "Wan 2.1 图生视频" },
+            { id: "fal-ai/kling-video/v2/standard/image-to-video", name: "Kling v2 图生视频" },
+            { id: "fal-ai/veo-3.1/image-to-video", name: "Veo 3.1 图生视频" },
+          ],
+        });
+      }
+
+      // 未指定 capability 时返回全部
+      return NextResponse.json({
+        models: [
+          { id: "fal-ai/flux/dev", name: "Flux Dev" },
+          { id: "fal-ai/flux/schnell", name: "Flux Schnell" },
+          { id: "fal-ai/flux-pro/v1.1-ultra", name: "Flux Pro v1.1 Ultra" },
+          { id: "fal-ai/sora-2/image-to-video", name: "Sora 2 图生视频" },
+          { id: "fal-ai/sora-2/text-to-video", name: "Sora 2 文生视频" },
+          { id: "fal-ai/wan2.1-i2v", name: "Wan 2.1 图生视频" },
+          { id: "fal-ai/kling-video/v2/standard/image-to-video", name: "Kling v2 图生视频" },
         ],
       });
     }

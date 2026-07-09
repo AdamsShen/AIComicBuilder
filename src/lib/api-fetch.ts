@@ -11,7 +11,11 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   const userId = getUserId();
   const headers = new Headers(options.headers);
   if (userId) headers.set("x-user-id", userId);
-  const response = await fetch(url, { ...options, headers });
+  const response = await fetch(url, {
+    ...options,
+    headers,
+    credentials: "include", // 确保浏览器发送 auth session cookie
+  });
   if (!response.ok) {
     let message = `HTTP ${response.status}`;
     try {

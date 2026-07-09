@@ -1,6 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoIcon } from "@/components/logo";
+import { UserMenu } from "@/components/auth/user-menu";
+import { requireAuth } from "@/lib/auth/guard";
 import Link from "next/link";
 import { Settings, Wand2 } from "lucide-react";
 
@@ -10,6 +12,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const t = await getTranslations("common");
+  await requireAuth();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -37,6 +40,7 @@ export default async function DashboardLayout({
             <Settings className="h-4 w-4" />
           </Link>
           <LanguageSwitcher />
+          <UserMenu />
         </div>
       </header>
       <main className="flex-1 bg-[--surface] p-6 lg:p-8">{children}</main>

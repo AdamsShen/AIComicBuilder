@@ -25,6 +25,25 @@ export function createLanguageModel(config: ProviderConfig): LanguageModel {
       });
       return provider(config.modelId);
     }
+    case "fal": {
+      // fal.ai 文本生成通过 OpenRouter 企业端点，兼容 OpenAI 聊天格式。
+      // 端点: POST https://fal.run/openrouter/router/enterprise/v1/chat/completions
+      // 认证方式: Authorization: Key <key>（不是 Bearer）
+      const baseUrl = config.baseUrl.replace(/\/+$/, "");
+      const provider = createOpenAI({
+        apiKey: config.apiKey,
+        baseURL: `${baseUrl}/openrouter/router/enterprise/v1`,
+        fetch: async (url, init) => {
+          const headers = new Headers(init?.headers);
+          const auth = headers.get("Authorization");
+          if (auth?.startsWith("Bearer ")) {
+            headers.set("Authorization", `Key ${auth.slice(7)}`);
+          }
+          return fetch(url, { ...init, headers });
+        },
+      });
+      return provider.chat(config.modelId);
+    }
     default:
       throw new Error(`Unsupported protocol: ${config.protocol}`);
   }

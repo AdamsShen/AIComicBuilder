@@ -9,6 +9,7 @@ import { useLocale } from "next-intl";
 import { ArrowLeft, Loader2, Settings, Wand2 } from "lucide-react";
 import { LogoIcon } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { UserMenu } from "@/components/auth/user-menu";
 
 export default function ProjectLayout({
   children,
@@ -73,6 +74,7 @@ export default function ProjectLayout({
             <Settings className="h-4 w-4" />
           </Link>
           <LanguageSwitcher />
+          <UserMenu />
         </div>
       </header>
 

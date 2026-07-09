@@ -2,23 +2,25 @@ import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
-import { cookies } from "next/headers";
+import { requireAuth } from "@/lib/auth/guard";
+import { migrateAnonymousProjects } from "@/lib/auth/migrate-projects";
 import { ProjectCard } from "@/components/project-card";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
 import { Clapperboard } from "lucide-react";
 
 export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("ai_comic_uid")?.value ?? "";
+  const session = await requireAuth();
+  const userId = session.user.id;
 
-  const allProjects = userId
-    ? await db
-        .select()
-        .from(projects)
-        .where(eq(projects.userId, userId))
-        .orderBy(desc(projects.createdAt))
-    : [];
+  // 迁移匿名用户的项目到注册账户
+  await migrateAnonymousProjects(userId);
+
+  const allProjects = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.userId, userId))
+    .orderBy(desc(projects.createdAt));
 
   return (
     <div className="animate-page-in space-y-6">

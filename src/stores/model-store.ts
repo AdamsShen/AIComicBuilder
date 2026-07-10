@@ -33,6 +33,14 @@ export interface ModelConfig {
   video: { protocol: Protocol; baseUrl: string; apiKey: string; secretKey?: string; modelId: string } | null;
 }
 
+/** 整份模型配置（服务端同步用），对应持久化 state 的核心字段。 */
+export interface ModelConfigSnapshot {
+  providers: Provider[];
+  defaultTextModel: ModelRef | null;
+  defaultImageModel: ModelRef | null;
+  defaultVideoModel: ModelRef | null;
+}
+
 interface ModelStore {
   providers: Provider[];
   defaultTextModel: ModelRef | null;
@@ -50,6 +58,8 @@ interface ModelStore {
   setDefaultImageModel: (ref: ModelRef | null) => void;
   setDefaultVideoModel: (ref: ModelRef | null) => void;
   getModelConfig: () => ModelConfig;
+  /** 用服务端拉回的整份配置覆盖本地（登录后同步用）。 */
+  hydrateFromServer: (cfg: ModelConfigSnapshot) => void;
 }
 
 export const useModelStore = create<ModelStore>()(
@@ -140,6 +150,14 @@ export const useModelStore = create<ModelStore>()(
       setDefaultTextModel: (ref) => set({ defaultTextModel: ref }),
       setDefaultImageModel: (ref) => set({ defaultImageModel: ref }),
       setDefaultVideoModel: (ref) => set({ defaultVideoModel: ref }),
+
+      hydrateFromServer: (cfg) =>
+        set({
+          providers: cfg.providers ?? [],
+          defaultTextModel: cfg.defaultTextModel ?? null,
+          defaultImageModel: cfg.defaultImageModel ?? null,
+          defaultVideoModel: cfg.defaultVideoModel ?? null,
+        }),
 
       getModelConfig: () => {
         const state = get();

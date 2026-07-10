@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoIcon } from "@/components/logo";
 import { UserMenu } from "@/components/auth/user-menu";
-import { requireAuth } from "@/lib/auth/guard";
+import { requirePlan } from "@/lib/auth/guard";
 import Link from "next/link";
 import { Settings, Wand2 } from "lucide-react";
 
@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const t = await getTranslations("common");
-  await requireAuth();
+  await requirePlan();
 
   return (
     <div className="flex min-h-screen flex-col">

@@ -15,6 +15,7 @@
     "@google/genai": "^1.44.0",
     "@types/archiver": "^7.0.0",
     "ai": "^6.0.116",
+    "alipay-sdk": "^4.14.0",
     "archiver": "^7.0.1",
     "better-auth": "^1.6.23",
     "better-sqlite3": "^12.6.2",

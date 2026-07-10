@@ -432,6 +432,9 @@ export const users = sqliteTable("users", {
   emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
   name: text("name"),
   image: text("image"),
+  // 用户主动选择的套餐；null=尚未选择（需去定价页选），"free"=已选免费。
+  // Pro 状态不写在这里，由订阅/支付宝订单派生（见 getMembership）。
+  plan: text("plan", { enum: ["free", "pro"] }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -507,6 +510,48 @@ export const subscriptions = sqliteTable("subscriptions", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// 支付宝一次性购买会员时长的订单表（与 Stripe 订阅分离，互不影响）。
+// 每一行是一次购买；付款成功后回填 period_start/period_end，会员按订单叠加续期。
+export const alipayOrders = sqliteTable("alipay_orders", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  // 我方订单号（传给支付宝的 out_trade_no），全局唯一
+  outTradeNo: text("out_trade_no").notNull().unique(),
+  // 支付宝交易号 trade_no，付款成功后回填
+  alipayTradeNo: text("alipay_trade_no"),
+  planKey: text("plan_key").notNull(),
+  interval: text("interval", { enum: ["month", "year"] }).notNull(),
+  // 金额，单位：人民币「分」（如 138 元存 13800）
+  amount: integer("amount").notNull(),
+  status: text("status", {
+    enum: ["pending", "paid", "closed"],
+  }).notNull(),
+  periodStart: integer("period_start", { mode: "timestamp" }),
+  periodEnd: integer("period_end", { mode: "timestamp" }),
+  paidAt: integer("paid_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+// 登录用户的模型配置（Provider + 默认模型），按账号入库，跟着账号走。
+// config 为整份配置的 JSON 字符串（对应前端 model-store 的 providers/default*Model）。
+// 仅登录用户同步（userId 必为真实用户，故可 FK）；匿名用户仍走 localStorage。
+export const userModelConfig = sqliteTable("user_model_config", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  config: text("config").notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

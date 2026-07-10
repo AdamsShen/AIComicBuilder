@@ -9,6 +9,7 @@ import {
 } from "next/font/google";
 import "../globals.css";
 import { FingerprintProvider } from "@/components/fingerprint-provider";
+import { ModelConfigSync } from "@/components/model-config-sync";
 import { Toaster } from "sonner";
 
 const playfair = Playfair_Display({
@@ -56,7 +57,10 @@ export default async function LocaleLayout({
         suppressHydrationWarning
       >
         <NextIntlClientProvider messages={messages}>
-          <FingerprintProvider>{children}</FingerprintProvider>
+          <FingerprintProvider>
+            <ModelConfigSync />
+            {children}
+          </FingerprintProvider>
           <Toaster position="top-center" theme="dark" />
         </NextIntlClientProvider>
       </body>

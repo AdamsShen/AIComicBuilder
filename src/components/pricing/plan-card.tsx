@@ -3,9 +3,10 @@
 import { useTranslations } from "next-intl";
 import { Check, Sparkles } from "lucide-react";
 import { SubscribeButton } from "./subscribe-button";
+import { AlipayButton } from "./alipay-button";
+import { FreePlanButton } from "./free-plan-button";
 import { SignInDialog } from "@/components/auth/sign-in-dialog";
 import { useState } from "react";
-import Link from "next/link";
 import { PLANS } from "@/lib/plans";
 import type { BillingInterval } from "./pricing-header";
 
@@ -77,14 +78,28 @@ export function PlanCard({ plan, interval, isLoggedIn }: PlanCardProps) {
 
         <div className="text-center">
           {isFree ? (
-            <Link
-              href="/"
-              className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-[--border-subtle] bg-white text-sm font-medium text-[--text-primary] transition-colors hover:bg-[--surface]"
-            >
-              {t(plan.cta)}
-            </Link>
+            isLoggedIn ? (
+              <FreePlanButton />
+            ) : (
+              <button
+                onClick={() => setShowSignIn(true)}
+                className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-[--border-subtle] bg-white text-sm font-medium text-[--text-primary] transition-colors hover:bg-[--surface]"
+              >
+                {t(plan.cta)}
+              </button>
+            )
           ) : isLoggedIn ? (
-            <SubscribeButton priceId={priceId!} interval={interval} />
+            <div className="space-y-2.5">
+              <SubscribeButton priceId={priceId!} interval={interval} />
+              <div className="flex items-center gap-2">
+                <span className="h-px flex-1 bg-[--border-subtle]" />
+                <span className="text-[11px] text-[--text-muted]">
+                  {t("or")}
+                </span>
+                <span className="h-px flex-1 bg-[--border-subtle]" />
+              </div>
+              <AlipayButton interval={interval} />
+            </div>
           ) : (
             <button
               onClick={() => setShowSignIn(true)}

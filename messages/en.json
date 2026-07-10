@@ -530,6 +530,9 @@
     "perMonth": "mo",
     "perYear": "yr",
     "billedAnnually": "billed annually",
+    "or": "or",
+    "alipayCta": "Pay with Alipay",
+    "checkoutSuccess": "Payment successful — membership activated",
     "free": {
       "name": "Free",
       "price": "Free",
@@ -576,6 +579,7 @@
     "noAccount": "No account yet?",
     "haveAccount": "Already have an account?",
     "billing": "Billing",
+    "cancelPlan": "Cancel plan",
     "manageSubscription": "Manage Subscription"
   }
 }

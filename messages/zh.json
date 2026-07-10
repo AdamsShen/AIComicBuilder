@@ -531,6 +531,9 @@
     "perMonth": "/月",
     "perYear": "/年",
     "billedAnnually": "按年计费",
+    "or": "或",
+    "alipayCta": "支付宝支付",
+    "checkoutSuccess": "支付成功，会员已开通",
     "free": {
       "name": "免费版",
       "price": "免费",
@@ -577,6 +580,7 @@
     "noAccount": "还没有账户？",
     "haveAccount": "已有账户？",
     "billing": "账单管理",
+    "cancelPlan": "取消订阅",
     "manageSubscription": "管理订阅"
   }
 }

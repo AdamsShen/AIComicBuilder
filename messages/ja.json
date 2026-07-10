@@ -530,6 +530,9 @@
     "perMonth": "/月",
     "perYear": "/年",
     "billedAnnually": "年額請求",
+    "or": "または",
+    "alipayCta": "Alipayで支払う",
+    "checkoutSuccess": "お支払いが完了しました。会員が有効になりました",
     "free": {
       "name": "無料版",
       "price": "無料",
@@ -576,6 +579,7 @@
     "noAccount": "アカウントをお持ちでない方",
     "haveAccount": "すでにアカウントをお持ちの方",
     "billing": "請求管理",
+    "cancelPlan": "プランを解約",
     "manageSubscription": "サブスクリプション管理"
   }
 }

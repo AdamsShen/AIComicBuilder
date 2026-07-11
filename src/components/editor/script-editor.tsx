@@ -256,7 +256,7 @@ export function ScriptEditor() {
         </div>
       </div>
 
-      {/* 跨分集记忆：世界观设定 + 本集梗概/前情 */}
+      {/* 本集梗概（前情提要）——每集可自由编辑；世界观在项目「分集列表页」设置 */}
       <ProjectMemoryEditor projectId={project.id} episodeId={currentEpisodeId} />
 
       {/* Idea input */}

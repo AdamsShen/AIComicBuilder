@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EpisodeCard } from "@/components/editor/episode-card";
 import { EpisodeDialog } from "@/components/editor/episode-dialog";
+import { ProjectMemoryEditor } from "@/components/editor/project-memory-editor";
 import { useEpisodeStore, type Episode } from "@/stores/episode-store";
 import { apiFetch } from "@/lib/api-fetch";
 import Link from "next/link";
@@ -181,6 +182,11 @@ export default function EpisodesPage({
             {t("create")}
           </Button>
         </div>
+      </div>
+
+      {/* 项目级世界观设定（全局，所有分集共享） */}
+      <div className="mb-6">
+        <ProjectMemoryEditor projectId={projectId} />
       </div>
 
       {/* Episode grid */}

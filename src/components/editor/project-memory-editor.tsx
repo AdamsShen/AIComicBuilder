@@ -34,6 +34,7 @@ export function ProjectMemoryEditor({ projectId, episodeId }: Props) {
   const sumLoaded = useRef(false);
 
   useEffect(() => {
+    if (episodeId) return; // 世界观是项目级全局设定，仅在项目层加载/编辑
     let cancelled = false;
     wsLoaded.current = false;
     apiFetch(`/api/projects/${projectId}`)
@@ -49,7 +50,7 @@ export function ProjectMemoryEditor({ projectId, episodeId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, episodeId]);
 
   useEffect(() => {
     sumLoaded.current = false;
@@ -132,22 +133,28 @@ export function ProjectMemoryEditor({ projectId, episodeId }: Props) {
 
   return (
     <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">
-      {/* 世界观设定 */}
-      <div className="flex items-center gap-2 px-5 pt-3 pb-1">
-        <Globe className="h-3.5 w-3.5 text-sky-500" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
-          {t("worldSetting")}
-        </span>
-        {savingWS && <Loader2 className="h-3 w-3 animate-spin text-[--text-muted]" />}
-      </div>
-      <Textarea
-        value={worldSetting}
-        onChange={(e) => setWorldSetting(e.target.value)}
-        onBlur={saveWorldSetting}
-        placeholder={t("worldSettingPlaceholder")}
-        rows={3}
-        className="resize-none rounded-xl border-0 bg-transparent px-5 pb-3 font-mono text-sm leading-relaxed placeholder:text-[--text-muted] focus-visible:ring-0"
-      />
+      {/* 世界观设定：仅项目级显示（不在分集内编辑） */}
+      {!episodeId && (
+        <>
+          <div className="flex items-center gap-2 px-5 pt-3 pb-1">
+            <Globe className="h-3.5 w-3.5 text-sky-500" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
+              {t("worldSetting")}
+            </span>
+            {savingWS && (
+              <Loader2 className="h-3 w-3 animate-spin text-[--text-muted]" />
+            )}
+          </div>
+          <Textarea
+            value={worldSetting}
+            onChange={(e) => setWorldSetting(e.target.value)}
+            onBlur={saveWorldSetting}
+            placeholder={t("worldSettingPlaceholder")}
+            rows={3}
+            className="resize-none rounded-xl border-0 bg-transparent px-5 pb-3 font-mono text-sm leading-relaxed placeholder:text-[--text-muted] focus-visible:ring-0"
+          />
+        </>
+      )}
 
       {/* 本集梗概/前情（仅分集模式） */}
       {episodeId && (

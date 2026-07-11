@@ -257,9 +257,6 @@ export function ScriptEditor() {
         </div>
       </div>
 
-      {/* 本集梗概（前情提要）——每集可自由编辑；世界观在项目「分集列表页」设置 */}
-      <ProjectMemoryEditor projectId={project.id} episodeId={currentEpisodeId} />
-
       {/* Idea input */}
       <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">
         <div className="flex items-center justify-between px-5 pt-3 pb-1">
@@ -375,6 +372,9 @@ export function ScriptEditor() {
           )}
         </div>
       </div>
+
+      {/* 本集梗概（前情提要）：放在最下面——剧本生成后自动生成，也可手动编辑，无需主动填写 */}
+      <ProjectMemoryEditor projectId={project.id} episodeId={currentEpisodeId} />
     </div>
   );
 }

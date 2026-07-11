@@ -11,13 +11,15 @@ export default async function PricingPage() {
   if (session?.user && (await hasActivePlan(session.user.id))) {
     redirect("/");
   }
+  // 登录态在服务端判定并下传，避免客户端 useSession 与 SSR 首帧不一致导致水合报错
+  const isLoggedIn = !!session?.user;
 
   return (
     <div className="relative">
       <div className="absolute inset-0 bg-gradient-to-b from-[--surface] via-transparent to-transparent pointer-events-none" />
       <div className="relative max-w-6xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <PricingHeader />
-        <PricingPlans />
+        <PricingPlans isLoggedIn={isLoggedIn} />
         <FAQSection />
       </div>
     </div>

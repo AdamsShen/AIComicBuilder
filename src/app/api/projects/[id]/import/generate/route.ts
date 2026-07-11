@@ -21,6 +21,8 @@ interface CharacterData {
   scope: "main" | "guest";
   description: string;
   visualHint?: string;
+  gender?: string;
+  relationToLead?: string;
 }
 
 export async function POST(
@@ -65,7 +67,10 @@ export async function POST(
       name: char.name,
       description: char.description,
       visualHint: char.visualHint ?? "",
+      gender: char.gender ?? "",
+      relationToLead: char.relationToLead ?? "",
       scope: char.scope,
+      source: "ai",
       episodeId: null, // all characters are project-level now
     });
     charIdByName.set(char.name.toLowerCase().trim(), charId);

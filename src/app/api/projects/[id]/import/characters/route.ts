@@ -17,6 +17,8 @@ interface ExtractedChar {
   frequency: number;
   description: string;
   visualHint?: string;
+  gender?: string;
+  relationToLead?: string;
 }
 
 interface ExtractedRelation {

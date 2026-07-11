@@ -1,0 +1,1 @@
+ALTER TABLE `characters` ADD `source` text NOT NULL DEFAULT 'ai';

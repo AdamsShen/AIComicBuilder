@@ -14,6 +14,8 @@ interface ExtractedChar {
   name: string;
   description: string;
   visualHint?: string;
+  gender?: string;
+  relationToLead?: string;
   heightCm?: number;
   bodyType?: string;
   performanceStyle?: string;
@@ -101,10 +103,13 @@ export async function handleCharacterExtract(task: Task) {
         name: char.name,
         description: char.description,
         visualHint: char.visualHint ?? "",
+        gender: char.gender ?? "",
+        relationToLead: char.relationToLead ?? "",
         heightCm: char.heightCm || 0,
         bodyType: char.bodyType || "average",
         performanceStyle: char.performanceStyle || "",
         scope,
+        source: "ai",
         episodeId: payload.episodeId ?? null,
       })
       .returning();

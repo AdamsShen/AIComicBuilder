@@ -800,6 +800,8 @@ async function handleCharacterExtract(
     name: string;
     description: string;
     visualHint?: string;
+    gender?: string;
+    relationToLead?: string;
     scope?: string;
     heightCm?: number;
     bodyType?: string;
@@ -827,6 +829,9 @@ async function handleCharacterExtract(
           description: char.description,
           visualHint: char.visualHint ?? existing.visualHint ?? "",
           scope: (char.scope === "guest" ? "guest" : "main") as "main" | "guest",
+          // 仅在 AI 给出非空值时补写，避免覆盖已有/手动填写的内容
+          ...(char.gender ? { gender: char.gender } : {}),
+          ...(char.relationToLead ? { relationToLead: char.relationToLead } : {}),
         })
         .where(eq(characters.id, existing.id));
       console.log(`[CharacterExtract] Updated existing character "${char.name}" (${existing.id}), desc length: ${char.description.length}`);
@@ -842,10 +847,13 @@ async function handleCharacterExtract(
         name: char.name,
         description: char.description,
         visualHint: char.visualHint ?? "",
+        gender: char.gender ?? "",
+        relationToLead: char.relationToLead ?? "",
         heightCm: char.heightCm || 0,
         bodyType: char.bodyType || "average",
         performanceStyle: char.performanceStyle || "",
         scope,
+        source: "ai",
         episodeId: null,
       });
       existingByName.set(key, { id: charId, name: char.name } as typeof existingChars[0]);

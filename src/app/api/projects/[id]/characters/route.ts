@@ -63,6 +63,7 @@ export async function POST(
       heightCm: body.heightCm ?? 0,
       bodyType: body.bodyType ?? "average",
       performanceStyle: body.performanceStyle ?? "",
+      source: "manual",
       episodeId: scope === "main" ? null : body.episodeId ?? null,
     })
     .returning();

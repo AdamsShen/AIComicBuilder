@@ -16,11 +16,20 @@ JSON array only — no markdown fences, no commentary:
   {
     "name": "Character name exactly as written in screenplay",
     "scope": "main" or "guest",
+    "gender": "男 / 女 / 其他 / 未知 — short word in the screenplay's language",
+    "relationToLead": "relationship to the protagonist — see rules below",
     "description": "Full visual specification — single paragraph, all requirements below",
     "visualHint": "2–4 word visual identifier for dialogue labels (e.g. 银发金瞳, red coat auburn hair). Must be instantly recognizable at a glance — focus on the most distinctive physical trait(s).",
     "personality": "2–3 defining traits that shape posture, expression, and movement"
   }
 ]
+
+═══ GENDER & RELATION-TO-LEAD (REQUIRED — never leave empty) ═══
+- "gender": the character's gender as a short word in the screenplay's language (e.g. 男 / 女 / 其他 / 未知). If not stated, infer from name, role, and context — do NOT leave blank.
+- "relationToLead": FIRST identify the single protagonist the story centers on. Then state each character's relationship TO that protagonist as a short noun phrase in the screenplay's language:
+  · the protagonist themself → "主角本人" (English: "the protagonist")
+  · everyone else → their role relative to the lead, e.g. "主角的导师" / "主角的父亲" / "主角的宿敌" / "主角的挚友"
+  Keep it to a short phrase; never leave blank.
 
 ═══ SCOPE RULES ═══
 - "main": core characters who drive the story, appear in multiple scenes, or are central to the plot — protagonists, deuteragonists, key antagonists
@@ -79,5 +88,5 @@ export function buildCharacterExtractPrompt(screenplay: string): string {
 ${screenplay}
 --- END ---
 
-IMPORTANT: Your output language MUST match the language of the screenplay above. If it is in Chinese, write ALL fields (name, description, personality) in Chinese.`;
+IMPORTANT: Your output language MUST match the language of the screenplay above. If it is in Chinese, write ALL fields (name, gender, relationToLead, description, personality) in Chinese.`;
 }

@@ -81,6 +81,9 @@ export const characters = sqliteTable("characters", {
   heightCm: integer("height_cm").default(0),
   bodyType: text("body_type").default("average"),
   isStale: integer("is_stale").notNull().default(0),
+  // 角色来源：ai=AI 生成（性别 gender 与关系 relationToLead 应齐全）；
+  // manual=用户手动新增（这两项允许留空）。用于区分并对 AI 角色作完整性要求。
+  source: text("source", { enum: ["ai", "manual"] }).notNull().default("ai"),
   episodeId: text("episode_id").references(() => episodes.id, {
     onDelete: "cascade",
   }),

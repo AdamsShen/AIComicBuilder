@@ -414,6 +414,13 @@
       "when": 1790300000000,
       "tag": "0058_add_character_memory_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1790400000000,
+      "tag": "0059_add_character_source",
+      "breakpoints": true
     }
   ]
 }

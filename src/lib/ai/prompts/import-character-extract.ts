@@ -34,10 +34,16 @@ OUTPUT FORMAT — JSON array only, no markdown fences, no commentary:
   {
     "name": "Character name as it appears in text",
     "frequency": 5,
+    "gender": "男 / 女 / 其他 / 未知 — short word in the source language",
+    "relationToLead": "relationship to the protagonist — see rule below",
     "description": "Full visual specification — one dense paragraph following ALL requirements above",
     "visualHint": "2-4 word physical appearance identifier"
   }
 ]
+
+═══ GENDER & RELATION-TO-LEAD (REQUIRED — never leave empty) ═══
+- "gender": short word in the source language (男 / 女 / 其他 / 未知). Infer from name, role, era, and context if not stated.
+- "relationToLead": identify the protagonist the text centers on (the most frequent / most central character), then state each character's relationship TO that protagonist as a short noun phrase in the source language — the protagonist themself is "主角本人", others use phrases like "主角的父亲" / "主角的宿敌". Never leave blank.
 
 Respond ONLY with the JSON array. No markdown. No commentary.`;
 

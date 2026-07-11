@@ -10,6 +10,7 @@ import { Sparkles, Loader2, FileText, Lightbulb, ListOrdered } from "lucide-reac
 import { InlineModelPicker } from "@/components/editor/model-selector";
 import { AgentPicker } from "@/components/agent-picker";
 import { ProjectMemoryEditor } from "@/components/editor/project-memory-editor";
+import { AiOptimizeButton } from "@/components/editor/ai-optimize-button";
 import { apiFetch } from "@/lib/api-fetch";
 import { useModelGuard } from "@/hooks/use-model-guard";
 import { PromptEditButton } from "@/components/prompt-templates/prompt-edit-button";
@@ -261,11 +262,22 @@ export function ScriptEditor() {
 
       {/* Idea input */}
       <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">
-        <div className="flex items-center gap-2 px-5 pt-3 pb-1">
-          <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
-            {t("project.idea")}
-          </span>
+        <div className="flex items-center justify-between px-5 pt-3 pb-1">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
+              {t("project.idea")}
+            </span>
+          </div>
+          <AiOptimizeButton
+            value={project.idea || ""}
+            fieldLabel="idea"
+            projectId={project.id}
+            onOptimized={(v) => {
+              updateIdea(v);
+              scheduleSave();
+            }}
+          />
         </div>
         <Textarea
           value={project.idea}

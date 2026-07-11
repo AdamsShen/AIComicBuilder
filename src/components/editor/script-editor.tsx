@@ -270,6 +270,7 @@ export function ScriptEditor() {
             value={project.idea || ""}
             fieldLabel="idea"
             projectId={project.id}
+            episodeId={currentEpisodeId}
             onOptimized={(v) => {
               updateIdea(v);
               scheduleSave();

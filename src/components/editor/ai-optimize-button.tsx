@@ -20,6 +20,8 @@ interface AiOptimizeButtonProps {
   fieldLabel?: string;
   /** Project ID for API context */
   projectId: string;
+  /** 当前分集 id：用于注入本集相关的跨分集记忆（世界观/角色名册/前情） */
+  episodeId?: string | null;
   /** Optional reference images to send to vision AI for visual analysis */
   images?: string[];
 }
@@ -74,6 +76,7 @@ export function AiOptimizeButton({
   onOptimized,
   fieldLabel,
   projectId,
+  episodeId,
   images,
 }: AiOptimizeButtonProps) {
   const t = useTranslations();
@@ -111,6 +114,7 @@ export function AiOptimizeButton({
             images: images && images.length > 0 ? images : undefined,
           },
           modelConfig: getModelConfig(),
+          episodeId: episodeId ?? undefined,
         }),
       });
       const data = await resp.json();

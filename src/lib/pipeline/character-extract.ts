@@ -4,6 +4,8 @@ import { resolveAIProvider } from "@/lib/ai/provider-factory";
 import type { ModelConfigPayload } from "@/lib/ai/provider-factory";
 import { buildCharacterExtractPrompt } from "@/lib/ai/prompts/character-extract";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
+import { buildEpisodeMemoryContext } from "@/lib/ai/memory-context";
+import { extractJSON } from "@/lib/ai/ai-sdk";
 import { and, eq } from "drizzle-orm";
 import { id as genId } from "@/lib/id";
 import type { Task } from "@/lib/task-queue";
@@ -39,12 +41,14 @@ export async function handleCharacterExtract(task: Task) {
   });
 
   const ai = resolveAIProvider(payload.modelConfig);
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）
+  const memoryContext = await buildEpisodeMemoryContext(payload.projectId, payload.episodeId, { world: false, recap: false, mode: "extract" });
   const result = await ai.generateText(
-    buildCharacterExtractPrompt(payload.screenplay),
+    memoryContext + buildCharacterExtractPrompt(payload.screenplay),
     { systemPrompt, temperature: 0.5 }
   );
 
-  const parsed = JSON.parse(result);
+  const parsed = JSON.parse(extractJSON(result));
 
   // Support both formats: new { characters, relationships } and legacy array
   let extracted: ExtractedChar[];

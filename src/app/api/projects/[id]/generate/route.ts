@@ -269,7 +269,7 @@ export async function POST(
   }
 
   if (action === "single_video_prompt") {
-    return handleSingleVideoPrompt(projectId, userId, payload, modelConfig);
+    return handleSingleVideoPrompt(projectId, userId, payload, modelConfig, episodeId);
   }
 
   if (action === "batch_video_prompt") {
@@ -277,7 +277,7 @@ export async function POST(
   }
 
   if (action === "ai_optimize_text") {
-    return handleAiOptimizeText(payload, modelConfig);
+    return handleAiOptimizeText(projectId, payload, modelConfig, episodeId);
   }
 
   if (action === "video_assemble") {
@@ -771,9 +771,11 @@ async function handleCharacterExtract(
   }
 
   let aiText: string;
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）：帮助解析时识别/复用既有角色
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { world: false, recap: false, mode: "extract" });
   const boundAgent = await findBoundAgent(projectId, "character_extract");
   if (boundAgent) {
-    const agentResult = await callAndValidateAgent(boundAgent, "character_extract", buildCharacterExtractPrompt(script));
+    const agentResult = await callAndValidateAgent(boundAgent, "character_extract", memoryContext + buildCharacterExtractPrompt(script));
     if (agentResult instanceof NextResponse) return agentResult;
     aiText = agentResult.text;
   } else {
@@ -786,7 +788,7 @@ async function handleCharacterExtract(
     const { text } = await generateText({
       model,
       system: charExtractSystem,
-      prompt: buildCharacterExtractPrompt(script),
+      prompt: memoryContext + buildCharacterExtractPrompt(script),
     });
     aiText = text;
   }
@@ -2871,7 +2873,8 @@ async function handleSingleVideoPrompt(
   projectId: string,
   userId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  episodeId?: string
 ) {
   const shotId = payload?.shotId as string;
   console.log(`[SingleVideoPrompt] called, shotId=${shotId}`);
@@ -2966,7 +2969,8 @@ async function handleSingleVideoPrompt(
       const name = sceneMetaList[i]?.sceneName || (visionFrames.length > 1 ? `场景-${i + 1}` : `场景`);
       return { label: name, index: charsWithRefsHere.length + i + 1 };
     });
-    const promptRequest = buildRefVideoPromptRequest({
+    const vpMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { roster: false, recap: false });
+    const promptRequest = vpMemoryContext + buildRefVideoPromptRequest({
       motionScript: motionContext,
       cameraDirection: shot.cameraDirection || "static",
       duration: effectiveDuration,
@@ -3088,6 +3092,9 @@ async function handleBatchVideoPrompt(
   console.log(`[BatchVideoPrompt] Processing ${eligible.length} shots (${batchShots.length} total, ${batchCharacters.length} chars, mode=${batchGenMode})`);
   const bvpStartTime = Date.now();
 
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）：整批只算一次，避免每 shot 重复 DB 查询
+  const vpMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { roster: false, recap: false });
+
   const results = await Promise.all(
     eligible.map(async (shot) => {
       try {
@@ -3153,7 +3160,7 @@ async function handleBatchVideoPrompt(
           const name = sceneMetaList[i]?.sceneName || (visionFrames.length > 1 ? `场景-${i + 1}` : `场景`);
           return { label: name, index: batchCharsWithRefs.length + i + 1 };
         });
-        const promptRequest = buildRefVideoPromptRequest({
+        const promptRequest = vpMemoryContext + buildRefVideoPromptRequest({
           motionScript: motionContext,
           cameraDirection: shot.cameraDirection || "static",
           duration: effectiveDuration,
@@ -3185,8 +3192,10 @@ async function handleBatchVideoPrompt(
 // --- ai_optimize_text: use AI to optimize a text field ---
 
 async function handleAiOptimizeText(
+  projectId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  episodeId?: string
 ) {
   const originalText = payload?.originalText as string;
   const instruction = payload?.instruction as string;
@@ -3198,6 +3207,9 @@ async function handleAiOptimizeText(
   if (!modelConfig?.text) {
     return NextResponse.json({ error: "No text model configured" }, { status: 400 });
   }
+
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要），作为优化时的背景上下文
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
 
   const systemPrompt = images.length > 0
     ? `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本、当前生成的图片以及优化指令。请仔细观察图片中的不合理之处（如比例失调、角色错位、风格不一致、细节缺失等），结合优化指令重写原始文本。
@@ -3219,7 +3231,7 @@ async function handleAiOptimizeText(
   if (images.length > 0) {
     const ai = resolveAIProvider(modelConfig);
     const result = await ai.generateText(
-      `原始文本：\n${originalText}\n\n优化指令：\n${instruction}\n\n请观察上方图片中的问题，结合指令输出优化后的文本：`,
+      memoryContext + `原始文本：\n${originalText}\n\n优化指令：\n${instruction}\n\n请观察上方图片中的问题，结合指令输出优化后的文本：`,
       {
         systemPrompt,
         images,
@@ -3233,7 +3245,7 @@ async function handleAiOptimizeText(
   const { text } = await generateText({
     model,
     system: systemPrompt,
-    prompt: `原始文本：
+    prompt: memoryContext + `原始文本：
 ${originalText}
 
 优化指令：
@@ -3569,6 +3581,7 @@ async function handleGenerateRefPrompts(
     batches.push(allShots.slice(i, i + BATCH_SIZE));
   }
   console.log(`[GenerateRefPrompts] Starting sequential batched generation: ${batches.length} batch(es) of up to ${BATCH_SIZE} shots, total ${total}`);
+  const refMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { recap: false });
 
   let updatedCount = 0;
   const failed: Array<{ seq: number; err: string }> = [];
@@ -3590,9 +3603,9 @@ async function handleGenerateRefPrompts(
         visualStyle
       );
 
-      let promptRequest = refRelationsText
+      let promptRequest = refMemoryContext + (refRelationsText
         ? baseRefRequest + refRelationsText
-        : baseRefRequest;
+        : baseRefRequest);
 
       // Continuity context from the last shot of the previous batch.
       if (previousBatchTail) {
@@ -3913,6 +3926,7 @@ async function handleGenerateKeyframePrompts(
   const total = allShots.length;
   let doneCount = 0;
   console.log(`[GenerateKeyframePrompts] Starting concurrent generation: 0/${total}`);
+  const kfMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { recap: false });
   const results = await Promise.allSettled(
     allShots.map(async (shot) => {
       try {
@@ -3930,9 +3944,9 @@ async function handleGenerateKeyframePrompts(
           })),
           visualStyle
         );
-        const promptRequest = kfRelationsText
+        const promptRequest = kfMemoryContext + (kfRelationsText
           ? basePromptRequest + kfRelationsText
-          : basePromptRequest;
+          : basePromptRequest);
 
         const result = await textProvider.generateText(promptRequest, {
           systemPrompt: keyframeSystemPrompt,

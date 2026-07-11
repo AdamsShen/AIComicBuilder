@@ -4,6 +4,7 @@ import { resolveAIProvider } from "@/lib/ai/provider-factory";
 import type { ModelConfigPayload } from "@/lib/ai/provider-factory";
 import { buildShotSplitPrompt } from "@/lib/ai/prompts/shot-split";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
+import { buildEpisodeMemoryContext } from "@/lib/ai/memory-context";
 import { eq, and, or, isNull } from "drizzle-orm";
 import { id as genId } from "@/lib/id";
 import type { Task } from "@/lib/task-queue";
@@ -77,9 +78,10 @@ export async function handleShotSplit(task: Task) {
 
   let userPrompt = buildShotSplitPrompt(payload.screenplay, characterDescriptions, undefined, colorPalette || undefined, performanceStyles.length > 0 ? performanceStyles : undefined) + relationsText;
 
-  // Inject world setting
-  if (project?.worldSetting) {
-    userPrompt = `【World Setting】\n${project.worldSetting}\n\nAll shots must be consistent with this world setting.\n\n` + userPrompt;
+  // 注入跨分集记忆前缀（含世界观 + 全项目角色名册 + 前情提要），替代原先仅注入 worldSetting
+  const memoryContext = await buildEpisodeMemoryContext(payload.projectId, payload.episodeId);
+  if (memoryContext) {
+    userPrompt = memoryContext + userPrompt;
   }
 
   // Inject target duration

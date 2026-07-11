@@ -47,6 +47,8 @@ export const episodes = sqliteTable("episodes", {
     .default("keyframe"),
   description: text("description").default(""),
   keywords: text("keywords").default(""),
+  // 本集剧情梗概（前情提要）：剧本生成后自动总结，供后续分集生成时作记忆
+  summary: text("summary").default(""),
   scriptHash: text("script_hash").default(""),
   colorPalette: text("color_palette").default(""),
   targetDuration: integer("target_duration").default(0),
@@ -68,6 +70,10 @@ export const characters = sqliteTable("characters", {
   name: text("name").notNull(),
   description: text("description").default(""),
   visualHint: text("visual_hint").default(""),
+  // 性别（自由文本：男/女/其他/未知等）
+  gender: text("gender").default(""),
+  // 与主角的关系（自由文本，如"主角本人"/"主角的父亲"/"宿敌"），用于跨分集角色记忆
+  relationToLead: text("relation_to_lead").default(""),
   referenceImage: text("reference_image"),
   referenceImageHistory: text("reference_image_history").default("[]"),
   scope: text("scope", { enum: ["main", "guest"] }).notNull().default("main"),

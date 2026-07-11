@@ -3,6 +3,7 @@ import { projects, episodes } from "@/lib/db/schema";
 import { resolveAIProvider } from "@/lib/ai/provider-factory";
 import type { ModelConfigPayload } from "@/lib/ai/provider-factory";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
+import { buildEpisodeMemoryContext } from "@/lib/ai/memory-context";
 import { eq } from "drizzle-orm";
 import type { Task } from "@/lib/task-queue";
 
@@ -23,7 +24,9 @@ export async function handleScriptOutline(task: Task) {
   });
 
   const ai = resolveAIProvider(payload.modelConfig);
-  const result = await ai.generateText(`创意构想：${idea}`, {
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
+  const result = await ai.generateText(memoryContext + `创意构想：${idea}`, {
     systemPrompt,
     temperature: 0.7,
   });

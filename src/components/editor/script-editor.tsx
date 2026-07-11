@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { Sparkles, Loader2, FileText, Lightbulb, ListOrdered } from "lucide-react";
 import { InlineModelPicker } from "@/components/editor/model-selector";
 import { AgentPicker } from "@/components/agent-picker";
+import { ProjectMemoryEditor } from "@/components/editor/project-memory-editor";
 import { apiFetch } from "@/lib/api-fetch";
 import { useModelGuard } from "@/hooks/use-model-guard";
 import { PromptEditButton } from "@/components/prompt-templates/prompt-edit-button";
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 export function ScriptEditor() {
   const t = useTranslations();
   const { project, updateIdea, updateScript, fetchProject } = useProjectStore();
+  const currentEpisodeId = useProjectStore((s) => s.currentEpisodeId);
   const getModelConfig = useModelStore((s) => s.getModelConfig);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -253,6 +255,9 @@ export function ScriptEditor() {
           )}
         </div>
       </div>
+
+      {/* 跨分集记忆：世界观设定 + 本集梗概/前情 */}
+      <ProjectMemoryEditor projectId={project.id} episodeId={currentEpisodeId} />
 
       {/* Idea input */}
       <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">

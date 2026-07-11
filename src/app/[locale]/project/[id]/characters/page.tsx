@@ -6,6 +6,7 @@ import { Users, ArrowLeft, Loader2, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api-fetch";
 import { CharacterCard } from "@/components/editor/character-card";
 import { CharacterRelations } from "@/components/editor/character-relations";
+import { CharacterFormDialog } from "@/components/editor/character-form-dialog";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -15,6 +16,8 @@ interface Character {
   name: string;
   description: string;
   visualHint: string | null;
+  gender: string | null;
+  relationToLead: string | null;
   referenceImage: string | null;
   referenceImageHistory: string | null;
   scope: string;
@@ -135,6 +138,7 @@ export default function CharactersPage({
             </p>
           </div>
         </div>
+        <CharacterFormDialog projectId={projectId} onCreated={fetchData} />
       </div>
 
       {/* Main Characters Section */}
@@ -161,6 +165,8 @@ export default function CharactersPage({
                 name={char.name}
                 description={char.description}
                 visualHint={char.visualHint}
+                gender={char.gender}
+                relationToLead={char.relationToLead}
                 referenceImage={char.referenceImage}
                 referenceImageHistory={char.referenceImageHistory}
                 scope={char.scope}
@@ -215,6 +221,8 @@ export default function CharactersPage({
                         name={char.name}
                         description={char.description}
                         visualHint={char.visualHint}
+                        gender={char.gender}
+                        relationToLead={char.relationToLead}
                         referenceImage={char.referenceImage}
                         referenceImageHistory={char.referenceImageHistory}
                         scope={char.scope}

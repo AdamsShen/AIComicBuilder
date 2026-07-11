@@ -21,6 +21,8 @@ interface CharacterCardProps {
   name: string;
   description: string;
   visualHint: string | null;
+  gender?: string | null;
+  relationToLead?: string | null;
   referenceImage: string | null;
   referenceImageHistory?: string | null;
   onUpdate: () => void;
@@ -37,6 +39,8 @@ export function CharacterCard({
   name,
   description,
   visualHint,
+  gender,
+  relationToLead,
   referenceImage,
   referenceImageHistory,
   onUpdate,
@@ -54,11 +58,15 @@ export function CharacterCard({
   const [editName, setEditName] = useState(name);
   const [editDesc, setEditDesc] = useState(description);
   const [editVisualHint, setEditVisualHint] = useState(visualHint ?? "");
+  const [editGender, setEditGender] = useState(gender ?? "");
+  const [editRelationToLead, setEditRelationToLead] = useState(relationToLead ?? "");
 
   // Sync local state when props change (e.g. after re-extraction)
   useEffect(() => { setEditName(name); }, [name]);
   useEffect(() => { setEditDesc(description); }, [description]);
   useEffect(() => { setEditVisualHint(visualHint ?? ""); }, [visualHint]);
+  useEffect(() => { setEditGender(gender ?? ""); }, [gender]);
+  useEffect(() => { setEditRelationToLead(relationToLead ?? ""); }, [relationToLead]);
   const [generating, setGenerating] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -84,7 +92,13 @@ export function CharacterCard({
     await apiFetch(`/api/projects/${projectId}/characters/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editName, description: editDesc, visualHint: editVisualHint }),
+      body: JSON.stringify({
+        name: editName,
+        description: editDesc,
+        visualHint: editVisualHint,
+        gender: editGender,
+        relationToLead: editRelationToLead,
+      }),
     });
     onUpdate();
   }
@@ -254,6 +268,22 @@ export function CharacterCard({
           placeholder={t("character.visualHint")}
           className="h-8 text-xs text-muted-foreground"
         />
+        <div className="flex gap-2">
+          <Input
+            value={editGender}
+            onChange={(e) => setEditGender(e.target.value)}
+            onBlur={handleSave}
+            placeholder={t("character.gender")}
+            className="h-8 flex-1 text-xs text-muted-foreground"
+          />
+          <Input
+            value={editRelationToLead}
+            onChange={(e) => setEditRelationToLead(e.target.value)}
+            onBlur={handleSave}
+            placeholder={t("character.relationToLead")}
+            className="h-8 flex-[2] text-xs text-muted-foreground"
+          />
+        </div>
         <div className="space-y-2">
             <InlineModelPicker capability="image" value={imageModelRef} onChange={setImageModelRef} />
             <div className="flex gap-2">

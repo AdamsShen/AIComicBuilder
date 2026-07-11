@@ -5,6 +5,7 @@ import type { ProviderConfig } from "@/lib/ai/ai-sdk";
 import { db } from "@/lib/db";
 import { projects, episodes, characters, shots, dialogues, storyboardVersions, episodeCharacters, characterRelations, agentBindings, agents } from "@/lib/db/schema";
 import { callAgent, callAgentStream, validateAgentOutput, type AgentCategory } from "@/lib/ai/agent-caller";
+import { buildEpisodeMemoryContext } from "@/lib/ai/memory-context";
 
 /** Wrap agent call + validation, returning user-friendly error response on failure */
 async function callAndValidateAgent(
@@ -203,6 +204,10 @@ export async function POST(
     return handleScriptGenerate(projectId, userId, payload, modelConfig, episodeId);
   }
 
+  if (action === "episode_summary") {
+    return handleEpisodeSummary(projectId, episodeId, modelConfig);
+  }
+
   if (action === "script_parse") {
     return handleScriptParseStream(projectId, userId, modelConfig, episodeId);
   }
@@ -320,13 +325,16 @@ async function handleScriptOutlineAction(
     return NextResponse.json({ error: "No idea provided" }, { status: 400 });
   }
 
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要），注入到大纲生成提示词
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
+
   // === 智能体路由（流式）===
   const boundAgent = await findBoundAgent(projectId, "script_outline");
   if (boundAgent) {
     try {
       const agentStream = await callAgentStream(
         { platform: boundAgent.platform as "bailian" | "dify" | "coze", appId: boundAgent.appId, apiKey: boundAgent.apiKey },
-        `创意构想：${idea}`,
+        memoryContext + `创意构想：${idea}`,
       );
       // TransformStream: accumulate chunks, save to DB in flush (tied to response lifecycle)
       const decoder = new TextDecoder();
@@ -375,7 +383,7 @@ async function handleScriptOutlineAction(
   const result = streamText({
     model,
     system: outlineSystem,
-    prompt: `创意构想：${idea}`,
+    prompt: memoryContext + `创意构想：${idea}`,
     temperature: 0.7,
     onFinish: async ({ text }) => {
       try {
@@ -403,6 +411,88 @@ async function handleScriptOutlineAction(
 
 // --- script_generate: stream plain text screenplay from an idea ---
 
+const EPISODE_SUMMARY_SYSTEM =
+  "你是漫画剧本的剧情总结助手。请把给定剧本浓缩成一段中文梗概（150字以内），聚焦：关键事件、主要角色及其关系变化、结尾时人物的处境或悬念。只输出梗概正文，不要标题、不要分点、不要多余解释。";
+
+/** 调 AI 把剧本总结成一段梗概文本。 */
+async function summarizeScript(
+  script: string,
+  modelConfig: ModelConfig,
+): Promise<string> {
+  const model = createLanguageModel(modelConfig.text!);
+  const { text } = await generateText({
+    model,
+    system: EPISODE_SUMMARY_SYSTEM,
+    prompt: `剧本内容：\n${script}`,
+    temperature: 0.3,
+  });
+  return text.trim();
+}
+
+/** 剧本生成后自动生成并保存本集梗概（best-effort：无模型或失败仅日志，不抛）。 */
+async function autoGenerateEpisodeSummary(
+  episodeId: string,
+  script: string,
+  modelConfig?: ModelConfig,
+): Promise<void> {
+  if (!script.trim() || !modelConfig?.text) return;
+  try {
+    const summary = await summarizeScript(script, modelConfig);
+    if (summary) {
+      await db
+        .update(episodes)
+        .set({ summary, updatedAt: new Date() })
+        .where(eq(episodes.id, episodeId));
+      console.log(
+        `[EpisodeSummary] auto-saved for ${episodeId} (${summary.length} chars)`,
+      );
+    }
+  } catch (err) {
+    console.error("[EpisodeSummary] auto-gen failed:", err);
+  }
+}
+
+/** episode_summary action：按本集剧本重新生成梗概并保存（手动触发）。 */
+async function handleEpisodeSummary(
+  projectId: string,
+  episodeId?: string,
+  modelConfig?: ModelConfig,
+) {
+  if (!episodeId) {
+    return NextResponse.json({ error: "缺少分集" }, { status: 400 });
+  }
+  if (!modelConfig?.text) {
+    return NextResponse.json({ error: "No text model configured" }, { status: 400 });
+  }
+  // 校验该分集确属当前（已鉴权的）项目，防止越权覆盖他项目分集的 summary
+  const [ep] = await db
+    .select({ script: episodes.script })
+    .from(episodes)
+    .where(and(eq(episodes.id, episodeId), eq(episodes.projectId, projectId)));
+  if (!ep) {
+    return NextResponse.json({ error: "分集不存在" }, { status: 404 });
+  }
+  const script = ep.script?.trim();
+  if (!script) {
+    return NextResponse.json(
+      { error: "本集尚无剧本，无法生成梗概" },
+      { status: 400 },
+    );
+  }
+  try {
+    const summary = await summarizeScript(script, modelConfig);
+    await db
+      .update(episodes)
+      .set({ summary, updatedAt: new Date() })
+      .where(eq(episodes.id, episodeId));
+    return NextResponse.json({ summary });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[EpisodeSummary] Error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
 async function handleScriptGenerate(
   projectId: string,
   userId: string,
@@ -428,14 +518,19 @@ async function handleScriptGenerate(
       .where(eq(projects.id, projectId));
   }
 
+  // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要），注入到剧本生成提示词
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
+
   // === 智能体路由（流式）===
   const sgBoundAgent = await findBoundAgent(projectId, "script_generate");
   if (sgBoundAgent) {
     try {
       const outline = (payload?.outline as string) || "";
-      const agentPrompt = outline
-        ? `创意构想：${idea}\n\n故事大纲：${outline}`
-        : `创意构想：${idea}`;
+      const agentPrompt =
+        memoryContext +
+        (outline
+          ? `创意构想：${idea}\n\n故事大纲：${outline}`
+          : `创意构想：${idea}`);
       const agentStream = await callAgentStream(
         { platform: sgBoundAgent.platform as "bailian" | "dify" | "coze", appId: sgBoundAgent.appId, apiKey: sgBoundAgent.apiKey },
         agentPrompt,
@@ -459,6 +554,10 @@ async function handleScriptGenerate(
             console.log(`[ScriptGenerate Agent] Saved script (${script.length} chars)`);
           } catch (err) {
             console.error(`[ScriptGenerate Agent] DB save failed:`, err);
+          }
+          // 剧本生成后自动生成本集梗概（后台触发，不 await，避免延后流关闭）
+          if (episodeId) {
+            void autoGenerateEpisodeSummary(episodeId, script, modelConfig);
           }
         },
       });
@@ -496,20 +595,14 @@ async function handleScriptGenerate(
     ? `\n\n【故事大纲 - 请严格按照以下大纲结构展开剧本】\n${outline}\n\n`
     : "";
 
-  // Fetch world setting from project
-  let worldSettingContext = "";
-  const [projForWorld] = await db.select({ worldSetting: projects.worldSetting }).from(projects).where(eq(projects.id, projectId));
-  if (projForWorld?.worldSetting) {
-    worldSettingContext = `\n\n【世界观设定】\n${projForWorld.worldSetting}\n\n剧本必须与此世界观设定保持一致。\n\n`;
-  }
-
   const model = createLanguageModel(modelConfig.text);
   const scriptGenerateSystem = await resolvePrompt("script_generate", { userId, projectId });
 
   const result = streamText({
     model,
     system: scriptGenerateSystem,
-    prompt: worldSettingContext + outlineContext + buildScriptGeneratePrompt(idea),
+    // memoryContext 已含世界观设定 + 角色名册 + 前情提要
+    prompt: memoryContext + outlineContext + buildScriptGeneratePrompt(idea),
     temperature: 0.8,
     onFinish: async ({ text }) => {
       try {
@@ -527,6 +620,10 @@ async function handleScriptGenerate(
         console.log(`[ScriptGenerate] Saved generated script for ${episodeId || projectId}`);
       } catch (err) {
         console.error("[ScriptGenerate] onFinish error:", err);
+      }
+      // 剧本生成后自动生成本集梗概（后台触发，不 await，避免延后流关闭）
+      if (episodeId) {
+        void autoGenerateEpisodeSummary(episodeId, text, modelConfig);
       }
     },
   });
@@ -1152,6 +1249,9 @@ async function handleShotSplitStream(
     if (epDur?.targetDuration && epDur.targetDuration > 0) targetDuration = epDur.targetDuration;
   }
 
+  // 跨分集记忆前缀（含世界观 + 全项目角色名册 + 前情提要），替代原先仅注入 worldSetting
+  const shotMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
+
   const model = createLanguageModel(modelConfig.text);
   const videoMaxDuration = getModelMaxDuration(modelConfig?.video?.modelId);
   const shotSplitSlots = await resolveSlotContents("shot_split", { userId, projectId });
@@ -1200,9 +1300,9 @@ async function handleShotSplitStream(
       // Inject character relations (drives on-screen interaction framing)
       if (relationsText) prompt += relationsText;
 
-      // Inject world setting
-      if (projData?.worldSetting) {
-        prompt = `【世界观设定】\n${projData.worldSetting}\n\n所有镜头必须与此世界观设定保持一致。\n\n` + prompt;
+      // 注入跨分集记忆前缀（世界观 + 角色名册 + 前情提要）
+      if (shotMemoryContext) {
+        prompt = shotMemoryContext + prompt;
       }
 
       // Inject target duration

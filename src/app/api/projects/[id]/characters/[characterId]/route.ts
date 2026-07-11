@@ -26,6 +26,11 @@ export async function PATCH(
     name: string;
     description: string;
     visualHint: string;
+    gender: string;
+    relationToLead: string;
+    heightCm: number;
+    bodyType: string;
+    performanceStyle: string;
     scope: string;
     episodeId: string | null;
     referenceImage: string;
@@ -36,6 +41,11 @@ export async function PATCH(
   if (body.name !== undefined) updateData.name = body.name;
   if (body.description !== undefined) updateData.description = body.description;
   if (body.visualHint !== undefined) updateData.visualHint = body.visualHint;
+  if (body.gender !== undefined) updateData.gender = body.gender;
+  if (body.relationToLead !== undefined) updateData.relationToLead = body.relationToLead;
+  if (body.heightCm !== undefined) updateData.heightCm = body.heightCm;
+  if (body.bodyType !== undefined) updateData.bodyType = body.bodyType;
+  if (body.performanceStyle !== undefined) updateData.performanceStyle = body.performanceStyle;
   if (body.referenceImage !== undefined) updateData.referenceImage = body.referenceImage;
   if (body.scope !== undefined) {
     updateData.scope = body.scope;

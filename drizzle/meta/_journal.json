@@ -407,6 +407,13 @@
       "when": 1790200000000,
       "tag": "0057_add_user_model_config",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1790300000000,
+      "tag": "0058_add_character_memory_fields",
+      "breakpoints": true
     }
   ]
 }

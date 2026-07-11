@@ -258,6 +258,38 @@ export async function DELETE(
     );
   }
 
-  await db.delete(episodes).where(eq(episodes.id, episodeId));
+  // 删除分集时，一并清理"仅属于该集"的全局角色，避免残留孤儿数据。
+  // 关键顺序：先记录该集通过 episode_characters 关联的角色，再删分集
+  // （删分集会级联清空这些关联行，以及 episodeId 绑定的角色/分镜/场景/任务），
+  // 最后把这些角色里"删后不再被任何分集关联"的删掉。仅项目级、从未关联任何
+  // 分集的角色不在 linkedCharIds 内，天然不会被误删。
+  db.transaction((tx) => {
+    const linkedCharIds = tx
+      .select({ characterId: episodeCharacters.characterId })
+      .from(episodeCharacters)
+      .where(eq(episodeCharacters.episodeId, episodeId))
+      .all()
+      .map((r) => r.characterId);
+
+    tx.delete(episodes).where(eq(episodes.id, episodeId)).run();
+
+    if (linkedCharIds.length > 0) {
+      // 删分集后仍存在关联的角色 = 被其它分集共享，需保留
+      const stillLinked = new Set(
+        tx
+          .select({ characterId: episodeCharacters.characterId })
+          .from(episodeCharacters)
+          .where(inArray(episodeCharacters.characterId, linkedCharIds))
+          .all()
+          .map((r) => r.characterId)
+      );
+      const orphanCharIds = linkedCharIds.filter((cid) => !stillLinked.has(cid));
+      if (orphanCharIds.length > 0) {
+        // 角色行删除时，其对话/关系/服装/关联行按外键级联一并清理
+        tx.delete(characters).where(inArray(characters.id, orphanCharIds)).run();
+      }
+    }
+  });
+
   return new NextResponse(null, { status: 204 });
 }

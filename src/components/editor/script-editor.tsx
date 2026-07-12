@@ -10,6 +10,8 @@ import { Sparkles, Loader2, FileText, Lightbulb, ListOrdered } from "lucide-reac
 import { InlineModelPicker } from "@/components/editor/model-selector";
 import { AgentPicker } from "@/components/agent-picker";
 import { ProjectMemoryEditor } from "@/components/editor/project-memory-editor";
+import { CoherenceWarningCard } from "@/components/editor/coherence-warning-card";
+import { EpisodeFactsPanel } from "@/components/editor/episode-facts-panel";
 import { AiOptimizeButton } from "@/components/editor/ai-optimize-button";
 import { apiFetch } from "@/lib/api-fetch";
 import { useModelGuard } from "@/hooks/use-model-guard";
@@ -374,8 +376,14 @@ export function ScriptEditor() {
         </div>
       </div>
 
+      {/* 连贯性校验（D）提示：剧本生成后后台写入，展示与已确立事实/前情的矛盾及标题对齐 */}
+      <CoherenceWarningCard projectId={project.id} episodeId={currentEpisodeId} />
+
       {/* 本集梗概（前情提要）：放在最下面——剧本生成后自动生成，也可手动编辑，无需主动填写 */}
       <ProjectMemoryEditor projectId={project.id} episodeId={currentEpisodeId} />
+
+      {/* 本集提取的设定事实：剧本生成后自动抽取（source_episode_id=本集），只读展示 */}
+      <EpisodeFactsPanel projectId={project.id} episodeId={currentEpisodeId} />
     </div>
   );
 }

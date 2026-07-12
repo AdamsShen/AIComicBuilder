@@ -44,7 +44,7 @@ export async function handleCharacterExtract(task: Task) {
 
   const ai = resolveAIProvider(payload.modelConfig);
   // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）
-  const memoryContext = await buildEpisodeMemoryContext(payload.projectId, payload.episodeId, { world: false, recap: false, mode: "extract" });
+  const memoryContext = await buildEpisodeMemoryContext(payload.projectId, payload.episodeId, { world: false, recap: false, canon: false, mode: "extract" });
   const result = await ai.generateText(
     memoryContext + buildCharacterExtractPrompt(payload.screenplay),
     { systemPrompt, temperature: 0.5 }

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
-import { projects, characters, episodes } from "@/lib/db/schema";
+import { projects, characters, episodes, canonFacts } from "@/lib/db/schema";
 import { eq, and, lt, asc } from "drizzle-orm";
+import { CANON_CATEGORY_LABEL } from "@/lib/canon/facts";
 
 // 上限：避免角色多/集数多/世界观过长导致前缀爆长、token 成本失控
 const MAX_WORLD = 400; // 世界观最大字符数
@@ -8,6 +9,7 @@ const MAX_ROSTER = 40; // 名册最多列出的角色数（主角优先）
 const MAX_DESC = 100; // 单个角色描述最大字符数
 const MAX_RECAP = 6; // 前情提要最多回溯的分集数（取最近的）
 const MAX_SUMMARY = 200; // 单集梗概最大字符数
+const MAX_CANON = 80; // 已确立事实最多注入条数（超出仅日志告警，不静默截断）
 
 function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max) + "…" : s;
@@ -21,6 +23,8 @@ export interface MemoryContextOptions {
   roster?: boolean;
   /** 前情提要，默认 true */
   recap?: boolean;
+  /** 已确立事实（Canon 设定集），默认 true；无损原样注入 */
+  canon?: boolean;
   /** 名册措辞：generate=要求沿用既有角色；extract=仅供命名对齐/去重（默认 generate） */
   mode?: "generate" | "extract";
 }
@@ -50,6 +54,7 @@ export async function buildEpisodeMemoryContext(
     world = true,
     roster = true,
     recap: includeRecap = true,
+    canon = true,
     mode = "generate",
   } = opts;
   const blocks: string[] = [];
@@ -108,6 +113,45 @@ export async function buildEpisodeMemoryContext(
           : "生成时必须沿用以上既有角色，尤其是主角及其家人，不得替换或另造主角；仅在剧情确有需要时才引入新角色，且需与既有人物设定不冲突。";
       blocks.push(
         `【已有角色名册（项目共享）】\n${rosterText}${more}\n\n${rosterInstruction}`,
+      );
+    }
+  }
+
+  // --- 已确立事实（Canon 设定集）：项目级无损事实层，逐条原样注入 ---
+  if (canon) {
+    const facts = await db
+      .select({
+        category: canonFacts.category,
+        content: canonFacts.content,
+      })
+      .from(canonFacts)
+      .where(eq(canonFacts.projectId, projectId))
+      .orderBy(asc(canonFacts.category), asc(canonFacts.createdAt));
+
+    if (facts.length > 0) {
+      const shown = facts.slice(0, MAX_CANON);
+      if (facts.length > MAX_CANON) {
+        // 不静默截断：超限时明确告知丢弃了多少条
+        console.warn(
+          `[MemoryContext] canon facts 超出上限，注入 ${MAX_CANON}/${facts.length} 条（丢弃 ${facts.length - MAX_CANON}）`,
+        );
+      }
+      // 按类别分组（查询已按 category 排序，Map 保持该顺序）
+      const byCat = new Map<string, string[]>();
+      for (const f of shown) {
+        if (!byCat.has(f.category)) byCat.set(f.category, []);
+        byCat.get(f.category)!.push(f.content);
+      }
+      const canonText = [...byCat.entries()]
+        .map(
+          ([cat, items]) =>
+            `${CANON_CATEGORY_LABEL[cat] ?? cat}：\n${items
+              .map((s) => `- ${s}`)
+              .join("\n")}`,
+        )
+        .join("\n");
+      blocks.push(
+        `【已确立事实·不可矛盾】\n${canonText}\n\n本集所有内容必须与以上已确立事实严格一致，不得改写其中的年龄、时间、天气、死法、道具、关系等既定细节。`,
       );
     }
   }

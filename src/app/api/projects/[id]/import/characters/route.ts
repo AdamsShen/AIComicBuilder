@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getUserIdFromRequest } from "@/lib/get-user-id";
-import { addImportLog, chunkText } from "@/lib/import-utils";
+import { addImportLog, chunkText, mapWithConcurrency, CHUNK_CONCURRENCY } from "@/lib/import-utils";
 import { buildImportCharacterExtractPrompt } from "@/lib/ai/prompts/import-character-extract";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
 
@@ -65,8 +65,7 @@ export async function POST(
   // Concurrent extraction from all chunks
   let chunkResults: Array<{ chars: ExtractedChar[]; rels: ExtractedRelation[] }>;
   try {
-    chunkResults = await Promise.all(
-      chunks.map(async (chunk, idx) => {
+    chunkResults = await mapWithConcurrency(chunks, CHUNK_CONCURRENCY, async (chunk, idx) => {
         await addImportLog(
           projectId, 2, "running",
           `正在处理第 ${idx + 1}/${chunks.length} 块...`
@@ -103,8 +102,7 @@ export async function POST(
           if (Array.isArray(parsed)) return { chars: parsed as ExtractedChar[], rels: [] as ExtractedRelation[] };
           return { chars: (parsed.characters || []) as ExtractedChar[], rels: (parsed.relationships || []) as ExtractedRelation[] };
         }
-      })
-    );
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     await addImportLog(projectId, 2, "error", `角色提取失败: ${msg}`);

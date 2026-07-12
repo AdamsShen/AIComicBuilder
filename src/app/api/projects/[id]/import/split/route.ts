@@ -66,49 +66,60 @@ export async function POST(
     ? `\n\nAll extracted characters (assign each to ONLY the episodes where they actually appear): ${allNames.join(", ")}`
     : "";
 
-  let allEpisodes: SplitEpisode[];
+  // 顺序处理各块（而非全块并发）：既天然限制并发，又能把"上一块结尾"作为
+  // 连贯性上下文传入、并用累计集数做 episodeOffset，缓解跨块边界把一集切成两半、
+  // 以及编号错乱的问题。单块文档（≤CHUNK_SIZE）仍只跑一次，无额外开销。
+  const allEpisodes: SplitEpisode[] = [];
   try {
-    const chunkResults = await Promise.all(
-      chunks.map(async (chunk, idx) => {
+    let prevTail = "";
+    for (let idx = 0; idx < chunks.length; idx++) {
+      const chunk = chunks[idx];
+      await addImportLog(
+        projectId, 3, "running",
+        `正在处理第 ${idx + 1}/${chunks.length} 块...`
+      );
+
+      // 跨块缝合：上一块结尾仅供理解连贯，明确要求不要为这部分重新分集
+      const contextPrefix = prevTail
+        ? `【上一段结尾——仅供理解上下文连贯，请勿为这部分内容重新分集】\n…${prevTail}\n\n【以下是本次需要分集的新内容】\n`
+        : "";
+
+      const prompt = buildScriptSplitPrompt(
+        contextPrefix + chunk + charContext,
+        { chunkIndex: idx, totalChunks: chunks.length, episodeOffset: allEpisodes.length }
+      );
+
+      const jsonMode = {
+        openai: { response_format: { type: "json_object" } },
+      };
+      const result = await generateText({
+        model,
+        system: scriptSplitSystem,
+        prompt,
+        providerOptions: jsonMode,
+      });
+
+      let eps: SplitEpisode[];
+      try {
+        eps = JSON.parse(extractJSON(result.text)) as SplitEpisode[];
+      } catch {
+        console.error(`[ImportSplit] Chunk ${idx + 1} JSON parse failed. Raw output:\n${result.text.slice(0, 500)}...`);
         await addImportLog(
           projectId, 3, "running",
-          `正在处理第 ${idx + 1}/${chunks.length} 块...`
+          `第 ${idx + 1} 块 JSON 解析失败，正在重试...`
         );
-
-        const prompt = buildScriptSplitPrompt(
-          chunk + charContext,
-          { chunkIndex: idx, totalChunks: chunks.length, episodeOffset: 0 }
-        );
-
-        const jsonMode = {
-          openai: { response_format: { type: "json_object" } },
-        };
-        const result = await generateText({
+        const retry = await generateText({
           model,
           system: scriptSplitSystem,
-          prompt,
+          prompt: prompt + "\n\nIMPORTANT: Return COMPLETE, VALID JSON. Fewer episodes is better than broken JSON.",
           providerOptions: jsonMode,
         });
+        eps = JSON.parse(extractJSON(retry.text)) as SplitEpisode[];
+      }
 
-        try {
-          return JSON.parse(extractJSON(result.text)) as SplitEpisode[];
-        } catch {
-          console.error(`[ImportSplit] Chunk ${idx + 1} JSON parse failed. Raw output:\n${result.text.slice(0, 500)}...`);
-          await addImportLog(
-            projectId, 3, "running",
-            `第 ${idx + 1} 块 JSON 解析失败，正在重试...`
-          );
-          const retry = await generateText({
-            model,
-            system: scriptSplitSystem,
-            prompt: prompt + "\n\nIMPORTANT: Return COMPLETE, VALID JSON. Fewer episodes is better than broken JSON.",
-            providerOptions: jsonMode,
-          });
-          return JSON.parse(extractJSON(retry.text)) as SplitEpisode[];
-        }
-      })
-    );
-    allEpisodes = chunkResults.flat();
+      allEpisodes.push(...(Array.isArray(eps) ? eps : []));
+      prevTail = chunk.slice(-800); // 仅带上一块末尾一小段做连贯上下文，避免上下文膨胀
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     await addImportLog(projectId, 3, "error", `分集失败: ${msg}`);

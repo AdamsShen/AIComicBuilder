@@ -6,6 +6,8 @@ import { db } from "@/lib/db";
 import { projects, episodes, characters, shots, dialogues, storyboardVersions, episodeCharacters, characterRelations, agentBindings, agents } from "@/lib/db/schema";
 import { callAgent, callAgentStream, validateAgentOutput, type AgentCategory } from "@/lib/ai/agent-caller";
 import { buildEpisodeMemoryContext } from "@/lib/ai/memory-context";
+import { extractCanonFacts } from "@/lib/canon/extract";
+import { checkEpisodeCoherence } from "@/lib/canon/coherence";
 
 /** Wrap agent call + validation, returning user-friendly error response on failure */
 async function callAndValidateAgent(
@@ -208,6 +210,10 @@ export async function POST(
     return handleEpisodeSummary(projectId, episodeId, modelConfig);
   }
 
+  if (action === "extract_canon") {
+    return handleExtractCanon(projectId, episodeId, modelConfig);
+  }
+
   if (action === "script_parse") {
     return handleScriptParseStream(projectId, userId, modelConfig, episodeId);
   }
@@ -278,6 +284,10 @@ export async function POST(
 
   if (action === "ai_optimize_text") {
     return handleAiOptimizeText(projectId, payload, modelConfig, episodeId);
+  }
+
+  if (action === "generate_world_setting") {
+    return handleGenerateWorldSetting(projectId, modelConfig, episodeId);
   }
 
   if (action === "video_assemble") {
@@ -452,6 +462,32 @@ async function autoGenerateEpisodeSummary(
   }
 }
 
+/**
+ * 剧本生成后的统一后处理（后台触发、best-effort）：
+ *   1. 自动生成本集梗概（前情提要用）
+ *   2. 连贯性 + 标题对齐校验（对比"既有 canon 与前情"，须在抽取前）
+ *   3. 抽取本集新的恒定事实追加进设定集（canon）
+ * 顺序关键：先校验、再抽取——否则本集事实先入库，等于自己和自己比，永不矛盾。
+ * 全部异常在各自函数内吞掉，不影响流关闭。
+ */
+async function postScriptGeneration(
+  projectId: string,
+  episodeId: string,
+  script: string,
+  modelConfig?: ModelConfig,
+): Promise<void> {
+  // 外层兜底：即便子函数各自已 try/catch，仍防止任何意外 rejection 逃逸（本函数由 void 调用）
+  try {
+    await autoGenerateEpisodeSummary(episodeId, script, modelConfig);
+    const textModel = modelConfig?.text;
+    if (!script.trim() || !textModel) return;
+    await checkEpisodeCoherence(projectId, episodeId, script, textModel);
+    await extractCanonFacts(projectId, episodeId, script, textModel);
+  } catch (err) {
+    console.error("[postScriptGeneration] 后处理失败:", err);
+  }
+}
+
 /** episode_summary action：按本集剧本重新生成梗概并保存（手动触发）。 */
 async function handleEpisodeSummary(
   projectId: string,
@@ -491,6 +527,40 @@ async function handleEpisodeSummary(
     console.error("[EpisodeSummary] Error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+/**
+ * extract_canon action：对某集现有剧本抽取恒定事实、追加进设定集。
+ * 用于给存量分集（本功能上线前已生成的集）补种 canon。返回新增条数。
+ */
+async function handleExtractCanon(
+  projectId: string,
+  episodeId?: string,
+  modelConfig?: ModelConfig,
+) {
+  if (!episodeId) {
+    return NextResponse.json({ error: "缺少分集" }, { status: 400 });
+  }
+  if (!modelConfig?.text) {
+    return NextResponse.json({ error: "No text model configured" }, { status: 400 });
+  }
+  // 校验分集归属当前（已鉴权）项目，防越权
+  const [ep] = await db
+    .select({ script: episodes.script })
+    .from(episodes)
+    .where(and(eq(episodes.id, episodeId), eq(episodes.projectId, projectId)));
+  if (!ep) {
+    return NextResponse.json({ error: "分集不存在" }, { status: 404 });
+  }
+  const script = ep.script?.trim();
+  if (!script) {
+    return NextResponse.json(
+      { error: "本集尚无剧本，无法提取设定" },
+      { status: 400 },
+    );
+  }
+  const added = await extractCanonFacts(projectId, episodeId, script, modelConfig.text);
+  return NextResponse.json({ added });
 }
 
 async function handleScriptGenerate(
@@ -555,9 +625,9 @@ async function handleScriptGenerate(
           } catch (err) {
             console.error(`[ScriptGenerate Agent] DB save failed:`, err);
           }
-          // 剧本生成后自动生成本集梗概（后台触发，不 await，避免延后流关闭）
+          // 剧本生成后统一后处理：梗概 + 连贯性校验 + 设定集抽取（后台触发，不 await）
           if (episodeId) {
-            void autoGenerateEpisodeSummary(episodeId, script, modelConfig);
+            void postScriptGeneration(projectId, episodeId, script, modelConfig);
           }
         },
       });
@@ -621,9 +691,9 @@ async function handleScriptGenerate(
       } catch (err) {
         console.error("[ScriptGenerate] onFinish error:", err);
       }
-      // 剧本生成后自动生成本集梗概（后台触发，不 await，避免延后流关闭）
+      // 剧本生成后统一后处理：梗概 + 连贯性校验 + 设定集抽取（后台触发，不 await）
       if (episodeId) {
-        void autoGenerateEpisodeSummary(episodeId, text, modelConfig);
+        void postScriptGeneration(projectId, episodeId, text, modelConfig);
       }
     },
   });
@@ -772,7 +842,7 @@ async function handleCharacterExtract(
 
   let aiText: string;
   // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）：帮助解析时识别/复用既有角色
-  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { world: false, recap: false, mode: "extract" });
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { world: false, recap: false, canon: false, mode: "extract" });
   const boundAgent = await findBoundAgent(projectId, "character_extract");
   if (boundAgent) {
     const agentResult = await callAndValidateAgent(boundAgent, "character_extract", memoryContext + buildCharacterExtractPrompt(script));
@@ -2977,7 +3047,7 @@ async function handleSingleVideoPrompt(
       const name = sceneMetaList[i]?.sceneName || (visionFrames.length > 1 ? `场景-${i + 1}` : `场景`);
       return { label: name, index: charsWithRefsHere.length + i + 1 };
     });
-    const vpMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { roster: false, recap: false });
+    const vpMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { roster: false, recap: false, canon: false });
     const promptRequest = vpMemoryContext + buildRefVideoPromptRequest({
       motionScript: motionContext,
       cameraDirection: shot.cameraDirection || "static",
@@ -3101,7 +3171,7 @@ async function handleBatchVideoPrompt(
   const bvpStartTime = Date.now();
 
   // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要）：整批只算一次，避免每 shot 重复 DB 查询
-  const vpMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { roster: false, recap: false });
+  const vpMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { roster: false, recap: false, canon: false });
 
   const results = await Promise.all(
     eligible.map(async (shot) => {
@@ -3263,6 +3333,74 @@ ${instruction}
   });
 
   return NextResponse.json({ optimizedText: text.trim() });
+}
+
+// --- generate_world_setting: AI 自动生成世界观设定 ---
+
+export const WORLD_SETTING_SYSTEM = `你是一位资深的虚构世界架构师和类型文学顾问。你的任务是为给定的故事项目撰写一份清晰、扎实、可写入画格的世界观设定。
+
+你必须严格依据下方提供的三个数据源来构思世界观，不得凭空编造超出材料范围的核心设定：
+- 【已有角色名册】：角色名字、身份、关系。作为推断社会结构、人际关系网络的基础。
+- 【已确立事实】：不可改变的时间线、地点、道具、组织等信息。作为硬性背景基石。
+- 【前情提要】：前面分集已发生的剧情。作为世界已演化的状态依据。
+
+撰写要求：
+1. **时代与空间**（1-2 句）：时代背景（古代/近未来/架空 等），关键地点（城市名、地标、地理特征）。必须与角色名册和已确立事实相容。
+2. **社会结构**（2-3 句）：该世界的核心势力、阶层、组织或派系。说明其张力或冲突关系。须从角色关系和 faction 事实推导。
+3. **核心规则/法则**（2-3 句）：这个世界运行的关键规则——可指物理法则、魔法规则、科技限制、社会禁忌等。若有超自然元素，写清楚其边界与代价，避免模糊。
+4. **基调与氛围**（1-2 句）：故事的整体情绪调性（悬疑/热血/黑暗/治愈 等），视觉风格倾向。
+
+输出格式：
+严格输出以下 JSON，不要附加任何其他文字：
+{
+  "worldSetting": "一段 120-280 字的中文世界观设���，按段落组织，不分点不编号。语气为客观叙述，不使用'你将'、'注意'等指令性表达。"
+}`;
+
+async function handleGenerateWorldSetting(
+  projectId: string,
+  modelConfig?: ModelConfig,
+  episodeId?: string,
+) {
+  if (!modelConfig?.text) {
+    return NextResponse.json({ error: "No text model configured" }, { status: 400 });
+  }
+
+  // 拉取完整记忆上下文：角色名册 + 已确立事实 + 前情提要（不含已有世界观）
+  const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
+  if (!memoryContext.trim()) {
+    return NextResponse.json(
+      { error: "项目尚无角色、事实或前情数据，无法生成世界观。请先创建角色或撰写剧本。" },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const model = createLanguageModel(modelConfig.text);
+    const { text } = await generateText({
+      model,
+      system: WORLD_SETTING_SYSTEM,
+      prompt: memoryContext + "\n请根据以上材料，生成该故事的世界观设定。",
+      temperature: 0.6,
+    });
+
+    const parsed = extractJSON(text);
+    const worldSetting = (parsed as Record<string, unknown>)?.worldSetting as string | undefined;
+    if (!worldSetting || !worldSetting.trim()) {
+      return NextResponse.json({ error: "AI 未能生成有效世界观，请重试" }, { status: 422 });
+    }
+
+    // 回写项目
+    await db
+      .update(projects)
+      .set({ worldSetting: worldSetting.trim(), updatedAt: new Date() })
+      .where(eq(projects.id, projectId));
+
+    return NextResponse.json({ worldSetting: worldSetting.trim() });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[GenerateWorldSetting] Error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 // --- batch_ref_image_generate: generate all pending reference images across shots ---
@@ -3589,7 +3727,7 @@ async function handleGenerateRefPrompts(
     batches.push(allShots.slice(i, i + BATCH_SIZE));
   }
   console.log(`[GenerateRefPrompts] Starting sequential batched generation: ${batches.length} batch(es) of up to ${BATCH_SIZE} shots, total ${total}`);
-  const refMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { recap: false });
+  const refMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { recap: false, canon: false });
 
   let updatedCount = 0;
   const failed: Array<{ seq: number; err: string }> = [];
@@ -3934,7 +4072,7 @@ async function handleGenerateKeyframePrompts(
   const total = allShots.length;
   let doneCount = 0;
   console.log(`[GenerateKeyframePrompts] Starting concurrent generation: 0/${total}`);
-  const kfMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { recap: false });
+  const kfMemoryContext = await buildEpisodeMemoryContext(projectId, episodeId, { recap: false, canon: false });
   const results = await Promise.allSettled(
     allShots.map(async (shot) => {
       try {

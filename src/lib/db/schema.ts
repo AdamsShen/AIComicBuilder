@@ -54,6 +54,8 @@ export const episodes = sqliteTable("episodes", {
   targetDuration: integer("target_duration").default(0),
   bgmUrl: text("bgm_url").default(""),
   finalVideoUrl: text("final_video_url"),
+  // 连贯性校验报告（D）：剧本生成后自动比对已确立事实/前情/本集标题，存 JSON 字符串
+  coherenceReport: text("coherence_report"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -97,6 +99,32 @@ export const episodeCharacters = sqliteTable("episode_characters", {
   characterId: text("character_id")
     .notNull()
     .references(() => characters.id, { onDelete: "cascade" }),
+});
+
+// 结构化设定集（Canon / Story Bible）：项目级、无损的"已确立事实"层。
+// 每条为一个原子事实，剧本生成时原样注入（不再二次总结），用于消除跨集
+// 时间线/年龄/道具/关系等硬矛盾。只增不改：抽取只追加，纠错由用户在面板删改。
+export const canonFacts = sqliteTable("canon_facts", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  // 事实类别：timeline=时间线事件(含年龄) / character=角色定档属性 /
+  // prop=关键道具 / location=地点 / faction=派系 / other=其他
+  category: text("category", {
+    enum: ["timeline", "character", "prop", "location", "faction", "other"],
+  })
+    .notNull()
+    .default("other"),
+  // 一条原子事实（原样注入，不截断），如"屠村时阿离10岁；暴雨纵火夜；父亲赤手空拳被铁骑踏死"
+  content: text("content").notNull(),
+  // 该事实由哪一集确立；手动新增为 null。删集时置空（set null）而非删除事实。
+  sourceEpisodeId: text("source_episode_id").references(() => episodes.id, {
+    onDelete: "set null",
+  }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 export const storyboardVersions = sqliteTable("storyboard_versions", {

@@ -421,6 +421,13 @@
       "when": 1790400000000,
       "tag": "0059_add_character_source",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1790500000000,
+      "tag": "0060_add_canon",
+      "breakpoints": true
     }
   ]
 }

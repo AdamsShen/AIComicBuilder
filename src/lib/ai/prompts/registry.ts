@@ -31,7 +31,8 @@ export type PromptCategory =
   | "character"
   | "shot"
   | "frame"
-  | "video";
+  | "video"
+  | "story";
 
 export interface PromptDefinition {
   /** Machine-readable key, e.g. "script_generate" */
@@ -1961,6 +1962,141 @@ const refImagePromptsDef: PromptDefinition = {
   },
 };
 
+// ─── 17. world_setting ────────────────────────────────────
+
+const worldSettingSystemPrompt = `你是一位资深的虚构世界架构师和类型文学顾问。你的任务是为给定的故事项目撰写一份清晰、扎实、可写入画格的世界观设定。
+
+你必须严格依据下方提供的三个数据源来构思世界观，不得凭空编造超出材料范围的核心设定：
+- 【已有角色名册】：角色名字、身份、关系。作为推断社会结构、人际关系网络的基础。
+- 【已确立事实】：不可改变的时间线、地点、道具、组织等信息。作为硬性背景基石。
+- 【前情提要】：前面分集已发生的剧情。作为世界已演化的状态依据。
+
+撰写要求：
+1. **时代与空间**（1-2 句）：时代背景（古代/近未来/架空 等），关键地点（城市名、地标、地理特征）。必须与角色名册和已确立事实相容。
+2. **社会结构**（2-3 句）：该世界的核心势力、阶层、组织或派系。说明其张力或冲突关系。须从角色关系和 faction 事实推导。
+3. **核心规则/法则**（2-3 句）：这个世界运行的关键规则——可指物理法则、魔法规则、科技限制、社会禁忌等。若有超自然元素，写清楚其边界与代价，避免模糊。
+4. **基调与氛围**（1-2 句）：故事的整体情绪调性（悬疑/热血/黑暗/治愈 等），视觉风格倾向。
+
+输出格式：
+严格输出以下 JSON，不要附加任何其他文字：
+{
+  "worldSetting": "一段 120-280 字的中文世界观设定，按段落组织，不分点不编号。语气为客观叙述，不使用'你将'、'注意'等指令性表达。"
+}`;
+
+const worldSettingDef: PromptDefinition = {
+  key: "world_setting",
+  nameKey: "promptTemplates.prompts.world_setting.name",
+  descriptionKey: "promptTemplates.prompts.world_setting.desc",
+  category: "story",
+  slots: [
+    slot("system_prompt", worldSettingSystemPrompt, true),
+  ],
+  buildFullPrompt(sc) {
+    const r = (k: string) => resolve(sc, s, k);
+    return r("system_prompt");
+  },
+};
+
+// ─── 18. episode_summary ──────────────────────────────────
+
+const episodeSummarySystemPrompt = "你是漫画剧本的剧情总结助手。请把给定剧本浓缩成一段中文梗概（150字以内），聚焦：关键事件、主要角色及其关系变化、结尾时人物的处境或悬念。只输出梗概正文，不要标题、不要分点、不要多余解释。";
+
+const episodeSummaryDef: PromptDefinition = {
+  key: "episode_summary",
+  nameKey: "promptTemplates.prompts.episode_summary.name",
+  descriptionKey: "promptTemplates.prompts.episode_summary.desc",
+  category: "story",
+  slots: [
+    slot("system_prompt", episodeSummarySystemPrompt, true),
+  ],
+  buildFullPrompt(sc) {
+    const r = (k: string) => resolve(sc, s, k);
+    return r("system_prompt");
+  },
+};
+
+// ─── 19. canon_extract ────────────────────────────────────
+
+const canonExtractSystemPrompt = `你是连载故事的"设定集/圣经（Story Bible）"维护者。你的职责：从一集剧本里提炼出**跨集恒定、不可再变**的硬事实，供后续分集生成时作为强约束，杜绝前后矛盾（如同一事件在不同集里年龄、天气、死法、道具不一致）。
+
+═══ 只抽"原子事实"═══
+每条事实必须是：
+- 原子：一条只讲一件事，不要把多件事塞进一句。
+- 可验证：能被后续剧本明确"符合/违背"，而非主观感受或文风。
+- 恒定：一旦确立，后续各集都不该改变（年龄、亲缘、死亡、外观定档特征、关键道具归属与纹样、地名与归属等）。
+
+═══ 抽取范围（按类别）═══
+- timeline（时间线）：关键事件及其发生时的人物**年龄/时序**。例："屠村时阿离10岁""阿离15岁在荒原商道遇墨渊"。务必写清年龄或先后顺序。
+- character（角色设定）：定档不变的属性——性别、与主角关系、致命经历、身体标记。例："嬴桀45岁，右脸有旧刀疤""墨渊曾是嬴桀的国师，被其废去修为"。
+- prop（关键道具）：有辨识特征、跨集复现的道具及其归属。例："猎刀是老爹遗物，阿离随身携带""嬴桀左手中指血玉扳指，内圈古纹与阿离母亲平安结纹样相同"。
+- location（地点）：重要地点及其归属/状态。例："阿琅村被嬴桀军队屠灭"。
+- faction（派系）：势力、组织及其立场。
+- other：不属以上但确需锁定的事实。
+
+═══ 不要抽 ═══
+- 一次性的场景描写、运镜、情绪、台词原文、文风。
+- 会随剧情推进而变化的临时状态（如"此刻很愤怒"）。
+- 已在"已有设定"清单里出现（或语义等价）的事实——**只返回新增**。
+
+═══ 去重 ═══
+你会收到【已有设定】清单。仔细比对：若某事实已被其中一条覆盖（即使措辞不同），**不要重复输出**。只输出清单里没有的、真正新增的事实。若本集没有任何新增恒定事实，返回空数组 []。
+
+═══ 输出格式 ═══
+仅输出 JSON 数组，无 markdown 代码围栏、无解释：
+[
+  { "category": "timeline|character|prop|location|faction|other", "content": "一条原子事实（用剧本的语言）" }
+]
+
+语言：content 必须与剧本语言一致（中文剧本→中文）。`;
+
+const canonExtractDef: PromptDefinition = {
+  key: "canon_extract",
+  nameKey: "promptTemplates.prompts.canon_extract.name",
+  descriptionKey: "promptTemplates.prompts.canon_extract.desc",
+  category: "story",
+  slots: [
+    slot("system_prompt", canonExtractSystemPrompt, true),
+  ],
+  buildFullPrompt(sc) {
+    const r = (k: string) => resolve(sc, s, k);
+    return r("system_prompt");
+  },
+};
+
+// ─── 20. ai_optimize_text ─────────────────────────────────
+
+const aiOptimizeWithImageSystem = `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本、当前生成的图片以及优化指令。请仔细观察图片中的不合理之处（如比例失调、角色错位、风格不一致、细节缺失等），结合优化指令重写原始文本。
+规则：
+- 只输出优化后的文本，不要添加任何解释、前言或标记
+- 保持原文的语言（中文输入→中文输出）
+- 保持原文的整体结构和用途
+- 必须分析图片中存在的问题，并在优化后的文本中明确修复这些问题
+- 例如：如果图片中儿童被画得跟成人一样大，优化文本要强调"儿童身高约110cm，明显矮于成人"
+- 例如：如果角色服装与原文不符，优化文本要更明确地描述服装细节`;
+
+const aiOptimizeWithoutImageSystem = `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本和优化指令，请根据指令优化原始文本。
+规则：
+- 只输出优化后的文本，不要添加任何解释、前言或标记
+- 保持原文的语言（中文输入→中文输出）
+- 保持原文的整体结构和用途
+- 根据优化指令做针对性改进`;
+
+const aiOptimizeTextDef: PromptDefinition = {
+  key: "ai_optimize_text",
+  nameKey: "promptTemplates.prompts.ai_optimize_text.name",
+  descriptionKey: "promptTemplates.prompts.ai_optimize_text.desc",
+  category: "story",
+  slots: [
+    slot("system_prompt_with_image", aiOptimizeWithImageSystem, true),
+    slot("system_prompt_without_image", aiOptimizeWithoutImageSystem, true),
+  ],
+  buildFullPrompt(sc) {
+    // 该提示词有两种模式，调用方根据是否有图片选择对应 slot
+    const r = (k: string) => resolve(sc, s, k);
+    return r("system_prompt_without_image");
+  },
+};
+
 // ── Registry ─────────────────────────────────────────────
 
 export const PROMPT_REGISTRY: PromptDefinition[] = [
@@ -1980,6 +2116,10 @@ export const PROMPT_REGISTRY: PromptDefinition[] = [
   videoGenerateDef,
   refVideoGenerateDef,
   refVideoPromptDef,
+  worldSettingDef,
+  episodeSummaryDef,
+  canonExtractDef,
+  aiOptimizeTextDef,
 ];
 
 export const PROMPT_REGISTRY_MAP: Record<string, PromptDefinition> =

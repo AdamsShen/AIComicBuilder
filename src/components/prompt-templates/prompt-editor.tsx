@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { apiFetch } from "@/lib/api-fetch";
 import { toast } from "sonner";
 import { Save, RotateCcw, Layers } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { PresetDialog } from "./preset-dialog";
 import { useModelStore } from "@/stores/model-store";
 import { getModelMaxDuration } from "@/lib/ai/model-limits";
@@ -40,6 +40,7 @@ interface PromptEditorProps {
 
 export function PromptEditor({ scope = "global", projectId, initialPromptKey }: PromptEditorProps) {
   const t = useTranslations("promptTemplates");
+  const locale = useLocale();
   const store = usePromptTemplateStore();
   const {
     registry,
@@ -76,7 +77,7 @@ export function PromptEditor({ scope = "global", projectId, initialPromptKey }: 
     const init = async () => {
       try {
         const fetches: Promise<Response>[] = [
-          apiFetch("/api/prompt-templates/registry"),
+          apiFetch(`/api/prompt-templates/registry?locale=${locale}`),
           apiFetch(templatesBasePath),
         ];
         if (isProject) {

@@ -41,6 +41,7 @@
     "idea": "アイデア",
     "worldSetting": "世界観設定",
     "worldSettingPlaceholder": "物語の世界観・背景・ルールを記入（全話で共有、生成時に自動反映）",
+    "genAI": "AI 生成",
     "episodeSummary": "本話のあらすじ（前情）",
     "episodeSummaryPlaceholder": "本話の主要な展開。後続話が引き継ぎます（脚本生成後に自動入力、編集可）",
     "generateSummary": "あらすじ生成",
@@ -231,6 +232,7 @@
     "created": "エピソードが作成されました",
     "backToList": "エピソード一覧に戻る",
     "characters": "キャラクター",
+    "canon": "設定集",
     "mainCharacter": "メインキャラクター",
     "guestCharacter": "ゲストキャラクター",
     "promoteToMain": "メインに昇格",
@@ -347,7 +349,8 @@
       "storyboard": "ストーリーボード",
       "shot": "ストーリーボード",
       "frame": "フレーム",
-      "video": "動画"
+      "video": "動画",
+      "story": "ストーリー設定"
     },
     "prompts": {
       "scriptOutline": "ストーリー概要生成",
@@ -374,7 +377,23 @@
       "shotSplitKeyframeAssets": "ショット·キーフレーム提示語",
       "shotSplitKeyframeAssetsDesc": "既存のショットメタデータから先頭/末尾フレームの画像生成プロンプトを生成",
       "shotSplitReferenceAssets": "ショット·参照画像提示語",
-      "shotSplitReferenceAssetsDesc": "既存のショットメタデータから参照画像の画像生成プロンプトを生成"
+      "shotSplitReferenceAssetsDesc": "既存のショットメタデータから参照画像の画像生成プロンプトを生成",
+      "world_setting": {
+        "name": "世界観設定生成",
+        "desc": "キャラクター名簿と確定事実に基づいてストーリーの世界観を自動生成します"
+      },
+      "episode_summary": {
+        "name": "エピソード要約生成",
+        "desc": "脚本を要約に凝縮して前回あらすじ用に使用します"
+      },
+      "canon_extract": {
+        "name": "設定事実抽出",
+        "desc": "脚本からエピソードを跨いで恒常的な確固たる事実を抽出し設定集に追加します"
+      },
+      "ai_optimize_text": {
+        "name": "AIテキスト最適化",
+        "desc": "指示に基づいてプロンプト/説明テキストを最適化します（画像参照対応）"
+      }
     },
     "editor": {
       "slotMode": "スロット",

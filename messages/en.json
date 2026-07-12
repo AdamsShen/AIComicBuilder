@@ -41,6 +41,7 @@
     "idea": "Creative Idea",
     "worldSetting": "World Setting",
     "worldSettingPlaceholder": "Describe the world, background and rules (shared across episodes, auto-injected on generation)",
+    "genAI": "AI Generate",
     "episodeSummary": "Episode Recap",
     "episodeSummaryPlaceholder": "Key plot of this episode for later episodes to continue (auto-filled after script generation, editable)",
     "generateSummary": "Generate recap",
@@ -231,6 +232,7 @@
     "created": "Episode created",
     "backToList": "Back to Episodes",
     "characters": "Characters",
+    "canon": "Canon",
     "mainCharacter": "Main Character",
     "guestCharacter": "Guest Character",
     "promoteToMain": "Promote to Main",
@@ -347,7 +349,8 @@
       "storyboard": "Storyboard",
       "shot": "Storyboard",
       "frame": "Frame",
-      "video": "Video"
+      "video": "Video",
+      "story": "Story Settings"
     },
     "prompts": {
       "scriptOutline": "Story Outline",
@@ -374,7 +377,23 @@
       "shotSplitKeyframeAssets": "Shot · Keyframe Asset Prompts",
       "shotSplitKeyframeAssetsDesc": "Generate first/last frame image prompts from existing shot metadata",
       "shotSplitReferenceAssets": "Shot · Reference Image Prompts",
-      "shotSplitReferenceAssetsDesc": "Generate reference image prompts from existing shot metadata"
+      "shotSplitReferenceAssetsDesc": "Generate reference image prompts from existing shot metadata",
+      "world_setting": {
+        "name": "World Setting Generator",
+        "desc": "Auto-generate story world setting from character roster and established facts"
+      },
+      "episode_summary": {
+        "name": "Episode Summary Generator",
+        "desc": "Condense scripts into summaries for recap use"
+      },
+      "canon_extract": {
+        "name": "Canon Fact Extractor",
+        "desc": "Extract immutable cross-episode hard facts from scripts"
+      },
+      "ai_optimize_text": {
+        "name": "AI Text Optimizer",
+        "desc": "Optimize prompts/descriptions with optional image feedback"
+      }
     },
     "editor": {
       "slotMode": "Slots",

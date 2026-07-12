@@ -2,14 +2,13 @@
 
 import { useEffect, useState, useCallback, use } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Layers, Plus, Loader2, Users, X, Upload, FileUp, Merge, Download } from "lucide-react";
+import { Layers, Plus, Loader2, Users, X, Upload, FileUp, Merge, Download, BookMarked } from "lucide-react";
 import { uploadUrl } from "@/lib/utils/upload-url";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EpisodeCard } from "@/components/editor/episode-card";
 import { EpisodeDialog } from "@/components/editor/episode-dialog";
 import { ProjectMemoryEditor } from "@/components/editor/project-memory-editor";
-import { StoryBiblePanel } from "@/components/editor/story-bible-panel";
 import { useEpisodeStore, type Episode } from "@/stores/episode-store";
 import { apiFetch } from "@/lib/api-fetch";
 import Link from "next/link";
@@ -163,6 +162,13 @@ export default function EpisodesPage({
             <Users className="h-4 w-4" />
             {t("characters")}
           </Link>
+          <Link
+            href={`/${locale}/project/${projectId}/canon`}
+            className="inline-flex items-center gap-1.5 rounded-[10px] border border-[--border-subtle] bg-white px-3.5 py-2 text-sm font-medium text-[--text-secondary] shadow-sm transition-all hover:border-primary/20 hover:text-primary"
+          >
+            <BookMarked className="h-4 w-4" />
+            {t("canon")}
+          </Link>
           <Button
             variant="outline"
             onClick={() => {
@@ -188,11 +194,6 @@ export default function EpisodesPage({
       {/* 项目级世界观设定（全局，所有分集共享） */}
       <div className="mb-6">
         <ProjectMemoryEditor projectId={projectId} />
-      </div>
-
-      {/* 项目级设定集 / 已确立事实（Story Bible），跨集不可矛盾的硬约束 */}
-      <div className="mb-6">
-        <StoryBiblePanel projectId={projectId} />
       </div>
 
       {/* Episode grid */}

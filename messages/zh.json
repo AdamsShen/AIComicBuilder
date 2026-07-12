@@ -41,6 +41,7 @@
     "idea": "创意构思",
     "worldSetting": "世界观设定",
     "worldSettingPlaceholder": "填写故事的世界观、背景设定、基本规则（所有分集共享，生成时自动带上）",
+    "genAI": "AI 生成",
     "episodeSummary": "本集梗概（前情提要）",
     "episodeSummaryPlaceholder": "本集关键剧情，供后续分集延续（剧本生成后自动填写，可手动修改）",
     "generateSummary": "生成梗概",
@@ -232,6 +233,7 @@
     "created": "分集已创建",
     "backToList": "返回分集列表",
     "characters": "角色",
+    "canon": "设定集",
     "mainCharacter": "主要角色",
     "guestCharacter": "客串角色",
     "promoteToMain": "提升为主要角色",
@@ -348,7 +350,8 @@
       "storyboard": "分镜",
       "shot": "分镜",
       "frame": "画面",
-      "video": "视频"
+      "video": "视频",
+      "story": "故事设定"
     },
     "prompts": {
       "scriptOutline": "故事大纲生成",
@@ -375,7 +378,23 @@
       "shotSplitKeyframeAssets": "分镜·首尾帧提示词",
       "shotSplitKeyframeAssetsDesc": "基于已有镜头元数据生成首帧/尾帧的图像提示词",
       "shotSplitReferenceAssets": "分镜·参考图提示词",
-      "shotSplitReferenceAssetsDesc": "基于已有镜头元数据生成参考图的图像提示词"
+      "shotSplitReferenceAssetsDesc": "基于已有镜头元数据生成参考图的图像提示词",
+      "world_setting": {
+        "name": "世界观设定生成",
+        "desc": "基于角色名册和已确立事实自动生成故事世界观"
+      },
+      "episode_summary": {
+        "name": "本集梗概生成",
+        "desc": "将剧本浓缩为150字梗概供前情提要使用"
+      },
+      "canon_extract": {
+        "name": "设定事实提取",
+        "desc": "从剧本中提取跨集恒定的硬事实加入设定集"
+      },
+      "ai_optimize_text": {
+        "name": "AI文本优化",
+        "desc": "根据指令优化提示词/描述文本（支持图片参考）"
+      }
     },
     "editor": {
       "slotMode": "插槽",

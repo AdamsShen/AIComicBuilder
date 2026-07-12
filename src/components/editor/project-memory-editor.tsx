@@ -29,6 +29,7 @@ export function ProjectMemoryEditor({ projectId, episodeId }: Props) {
   const [savingWS, setSavingWS] = useState(false);
   const [savingSum, setSavingSum] = useState(false);
   const [genSum, setGenSum] = useState(false);
+  const [genWorld, setGenWorld] = useState(false);
   // 初始加载成功前禁止保存，避免把空值 PATCH 覆盖掉已存内容
   const wsLoaded = useRef(false);
   const sumLoaded = useRef(false);
@@ -131,19 +132,65 @@ export function ProjectMemoryEditor({ projectId, episodeId }: Props) {
     }
   }
 
+  async function handleGenWorld() {
+    setGenWorld(true);
+    try {
+      const res = await apiFetch(`/api/projects/${projectId}/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generate_world_setting",
+          modelConfig: getModelConfig(),
+        }),
+      });
+      const data = await res.json();
+      if (data.worldSetting) {
+        setWorldSetting(data.worldSetting);
+        await apiFetch(`/api/projects/${projectId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ worldSetting: data.worldSetting }),
+        });
+        wsLoaded.current = true;
+        toast.success("世界观已生成");
+      } else if (data.error) {
+        toast.error(data.error);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGenWorld(false);
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">
       {/* 世界观设定：仅项目级显示（不在分集内编辑） */}
       {!episodeId && (
         <>
-          <div className="flex items-center gap-2 px-5 pt-3 pb-1">
-            <Globe className="h-3.5 w-3.5 text-sky-500" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
-              {t("worldSetting")}
-            </span>
-            {savingWS && (
-              <Loader2 className="h-3 w-3 animate-spin text-[--text-muted]" />
-            )}
+          <div className="flex items-center justify-between px-5 pt-3 pb-1">
+            <div className="flex items-center gap-2">
+              <Globe className="h-3.5 w-3.5 text-sky-500" />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
+                {t("worldSetting")}
+              </span>
+              {savingWS && (
+                <Loader2 className="h-3 w-3 animate-spin text-[--text-muted]" />
+              )}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleGenWorld}
+              disabled={genWorld}
+            >
+              {genWorld ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              {t("genAI")}
+            </Button>
           </div>
           <Textarea
             value={worldSetting}

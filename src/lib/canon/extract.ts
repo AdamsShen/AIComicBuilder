@@ -42,6 +42,7 @@ export async function extractCanonFacts(
   episodeId: string | null,
   script: string,
   textModel: ProviderConfig,
+  systemPrompt?: string,
 ): Promise<number> {
   if (!script.trim()) return 0;
   try {
@@ -51,7 +52,7 @@ export async function extractCanonFacts(
     const model = createLanguageModel(textModel);
     const { text } = await generateText({
       model,
-      system: CANON_EXTRACT_SYSTEM,
+      system: systemPrompt || CANON_EXTRACT_SYSTEM,
       prompt: buildCanonExtractPrompt(script, existingText),
       temperature: 0.2,
     });

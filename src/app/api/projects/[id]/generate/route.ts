@@ -207,11 +207,11 @@ export async function POST(
   }
 
   if (action === "episode_summary") {
-    return handleEpisodeSummary(projectId, episodeId, modelConfig);
+    return handleEpisodeSummary(projectId, episodeId, modelConfig, userId);
   }
 
   if (action === "extract_canon") {
-    return handleExtractCanon(projectId, episodeId, modelConfig);
+    return handleExtractCanon(projectId, episodeId, modelConfig, payload, userId);
   }
 
   if (action === "script_parse") {
@@ -283,11 +283,11 @@ export async function POST(
   }
 
   if (action === "ai_optimize_text") {
-    return handleAiOptimizeText(projectId, payload, modelConfig, episodeId);
+    return handleAiOptimizeText(projectId, payload, modelConfig, episodeId, userId);
   }
 
   if (action === "generate_world_setting") {
-    return handleGenerateWorldSetting(projectId, modelConfig, episodeId);
+    return handleGenerateWorldSetting(projectId, modelConfig, episodeId, userId);
   }
 
   if (action === "video_assemble") {
@@ -428,11 +428,12 @@ const EPISODE_SUMMARY_SYSTEM =
 async function summarizeScript(
   script: string,
   modelConfig: ModelConfig,
+  systemPrompt?: string,
 ): Promise<string> {
   const model = createLanguageModel(modelConfig.text!);
   const { text } = await generateText({
     model,
-    system: EPISODE_SUMMARY_SYSTEM,
+    system: systemPrompt || EPISODE_SUMMARY_SYSTEM,
     prompt: `剧本内容：\n${script}`,
     temperature: 0.3,
   });
@@ -444,10 +445,14 @@ async function autoGenerateEpisodeSummary(
   episodeId: string,
   script: string,
   modelConfig?: ModelConfig,
+  userId?: string,
 ): Promise<void> {
   if (!script.trim() || !modelConfig?.text) return;
   try {
-    const summary = await summarizeScript(script, modelConfig);
+    const summarySystem = userId
+      ? await resolvePrompt("episode_summary", { userId })
+      : undefined;
+    const summary = await summarizeScript(script, modelConfig, summarySystem);
     if (summary) {
       await db
         .update(episodes)
@@ -493,6 +498,7 @@ async function handleEpisodeSummary(
   projectId: string,
   episodeId?: string,
   modelConfig?: ModelConfig,
+  userId?: string,
 ) {
   if (!episodeId) {
     return NextResponse.json({ error: "缺少分集" }, { status: 400 });
@@ -516,7 +522,10 @@ async function handleEpisodeSummary(
     );
   }
   try {
-    const summary = await summarizeScript(script, modelConfig);
+    const summarySystem = userId
+      ? await resolvePrompt("episode_summary", { userId })
+      : undefined;
+    const summary = await summarizeScript(script, modelConfig, summarySystem);
     await db
       .update(episodes)
       .set({ summary, updatedAt: new Date() })
@@ -531,12 +540,15 @@ async function handleEpisodeSummary(
 
 /**
  * extract_canon action：对某集现有剧本抽取恒定事实、追加进设定集。
- * 用于给存量分集（本功能上线前已生成的集）补种 canon。返回新增条数。
+ * - overwrite=true：提取前先删除该集已有事实（覆盖模式），否则追加。
+ * 返回新增条数。
  */
 async function handleExtractCanon(
   projectId: string,
   episodeId?: string,
   modelConfig?: ModelConfig,
+  payload?: Record<string, unknown>,
+  userId?: string,
 ) {
   if (!episodeId) {
     return NextResponse.json({ error: "缺少分集" }, { status: 400 });
@@ -559,7 +571,23 @@ async function handleExtractCanon(
       { status: 400 },
     );
   }
-  const added = await extractCanonFacts(projectId, episodeId, script, modelConfig.text);
+
+  // 覆盖模式：先清除该集之前提取的所有事实
+  if (payload?.overwrite) {
+    await db
+      .delete(canonFacts)
+      .where(
+        and(
+          eq(canonFacts.projectId, projectId),
+          eq(canonFacts.sourceEpisodeId, episodeId),
+        ),
+      );
+  }
+
+  const canonSystem = userId
+    ? await resolvePrompt("canon_extract", { userId })
+    : undefined;
+  const added = await extractCanonFacts(projectId, episodeId, script, modelConfig.text, canonSystem);
   return NextResponse.json({ added });
 }
 
@@ -3273,7 +3301,8 @@ async function handleAiOptimizeText(
   projectId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  userId?: string,
 ) {
   const originalText = payload?.originalText as string;
   const instruction = payload?.instruction as string;
@@ -3289,8 +3318,16 @@ async function handleAiOptimizeText(
   // 跨分集记忆前缀（世界观 + 角色名册 + 前情提要），作为优化时的背景上下文
   const memoryContext = await buildEpisodeMemoryContext(projectId, episodeId);
 
-  const systemPrompt = images.length > 0
-    ? `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本、当前生成的图片以及优化指令。请仔细观察图片中的不合理之处（如比例失调、角色错位、风格不一致、细节缺失等），结合优化指令重写原始文本。
+  // 从注册表解析系统提示词（有图片/无图片两个版本）
+  let systemPrompt: string;
+  if (userId) {
+    const slots = await resolveSlotContents("ai_optimize_text", { userId });
+    systemPrompt = images.length > 0
+      ? (slots.system_prompt_with_image ?? slots.system_prompt_without_image)
+      : (slots.system_prompt_without_image ?? "");
+  } else {
+    systemPrompt = images.length > 0
+      ? `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本、当前生成的图片以及优化指令。请仔细观察图片中的不合理之处（如比例失调、角色错位、风格不一致、细节缺失等），结合优化指令重写原始文本。
 规则：
 - 只输出优化后的文本，不要添加任何解释、前言或标记
 - 保持原文的语言（中文输入→中文输出）
@@ -3298,12 +3335,13 @@ async function handleAiOptimizeText(
 - 必须分析图片中存在的问题，并在优化后的文本中明确修复这些问题
 - 例如：如果图片中儿童被画得跟成人一样大，优化文本要强调"儿童身高约110cm，明显矮于成人"
 - 例如：如果角色服装与原文不符，优化文本要更明确地描述服装细节`
-    : `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本和优化指令，请根据指令优化原始文本。
+      : `你是一位专业的AI动画内容优化专家。用户会给你一段原始文本和优化指令，请根据指令优化原始文本。
 规则：
 - 只输出优化后的文本，不要添加任何解释、前言或标记
 - 保持原文的语言（中文输入→中文输出）
 - 保持原文的整体结构和用途
 - 根据优化指令做针对性改进`;
+  }
 
   // Use vision-capable text provider when images present
   if (images.length > 0) {
@@ -3360,6 +3398,7 @@ async function handleGenerateWorldSetting(
   projectId: string,
   modelConfig?: ModelConfig,
   episodeId?: string,
+  userId?: string,
 ) {
   if (!modelConfig?.text) {
     return NextResponse.json({ error: "No text model configured" }, { status: 400 });
@@ -3376,9 +3415,12 @@ async function handleGenerateWorldSetting(
 
   try {
     const model = createLanguageModel(modelConfig.text);
+    const worldSystem = userId
+      ? await resolvePrompt("world_setting", { userId })
+      : WORLD_SETTING_SYSTEM;
     const { text } = await generateText({
       model,
-      system: WORLD_SETTING_SYSTEM,
+      system: worldSystem,
       prompt: memoryContext + "\n请根据以上材料，生成该故事的世界观设定。",
       temperature: 0.6,
     });

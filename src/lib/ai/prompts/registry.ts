@@ -1992,6 +1992,7 @@ const worldSettingDef: PromptDefinition = {
     slot("system_prompt", worldSettingSystemPrompt, true),
   ],
   buildFullPrompt(sc) {
+    const s = this.slots;
     const r = (k: string) => resolve(sc, s, k);
     return r("system_prompt");
   },
@@ -2010,6 +2011,7 @@ const episodeSummaryDef: PromptDefinition = {
     slot("system_prompt", episodeSummarySystemPrompt, true),
   ],
   buildFullPrompt(sc) {
+    const s = this.slots;
     const r = (k: string) => resolve(sc, s, k);
     return r("system_prompt");
   },
@@ -2058,6 +2060,7 @@ const canonExtractDef: PromptDefinition = {
     slot("system_prompt", canonExtractSystemPrompt, true),
   ],
   buildFullPrompt(sc) {
+    const s = this.slots;
     const r = (k: string) => resolve(sc, s, k);
     return r("system_prompt");
   },
@@ -2092,6 +2095,7 @@ const aiOptimizeTextDef: PromptDefinition = {
   ],
   buildFullPrompt(sc) {
     // 该提示词有两种模式，调用方根据是否有图片选择对应 slot
+    const s = this.slots;
     const r = (k: string) => resolve(sc, s, k);
     return r("system_prompt_without_image");
   },

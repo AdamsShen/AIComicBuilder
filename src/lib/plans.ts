@@ -27,8 +27,8 @@ export const PLANS = {
       "pro.feature6",
     ],
     cta: "pro.cta" as const,
-    priceIdMonthly: process.env.STRIPE_MONTHLY_PRICE_ID || null,
-    priceIdYearly: process.env.STRIPE_YEARLY_PRICE_ID || null,
+    priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || null,
+    priceIdYearly: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || null,
     highlight: true,
   },
 };

@@ -35,11 +35,13 @@ export async function handleCharacterExtract(task: Task) {
     modelConfig?: ModelConfigPayload;
     episodeId?: string;
     userId?: string;
+    locale?: string;
   };
 
   const systemPrompt = await resolvePrompt("character_extract", {
     userId: payload.userId ?? "",
     projectId: payload.projectId,
+    locale: payload.locale,
   });
 
   const ai = resolveAIProvider(payload.modelConfig);

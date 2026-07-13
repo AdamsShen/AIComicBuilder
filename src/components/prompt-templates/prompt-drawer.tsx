@@ -48,9 +48,11 @@ interface PromptDrawerProps {
   promptKeys: string | string[];
   /** Project-scoped editing */
   projectId?: string;
+  /** Current UI locale for default content translation */
+  locale?: string;
 }
 
-export function PromptDrawer({ open, onOpenChange, promptKeys: rawKeys, projectId }: PromptDrawerProps) {
+export function PromptDrawer({ open, onOpenChange, promptKeys: rawKeys, projectId, locale }: PromptDrawerProps) {
   const t = useTranslations("promptTemplates");
   const promptKeys = Array.isArray(rawKeys) ? rawKeys : [rawKeys];
 
@@ -88,8 +90,11 @@ export function PromptDrawer({ open, onOpenChange, promptKeys: rawKeys, projectI
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      const registryUrl = locale
+        ? `/api/prompt-templates/registry?locale=${locale}`
+        : "/api/prompt-templates/registry";
       const [regResp, overResp] = await Promise.all([
-        apiFetch("/api/prompt-templates/registry"),
+        apiFetch(registryUrl),
         apiFetch(templatesBasePath),
       ]);
       const regData: PromptMeta[] = await regResp.json();

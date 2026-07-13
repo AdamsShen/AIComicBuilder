@@ -45,6 +45,7 @@ export async function POST(
     text: string;
     allCharacters: CharacterSummary[];
     modelConfig: { text: ProviderConfig | null };
+    locale?: string;
   };
 
   if (!body.modelConfig?.text) {
@@ -53,7 +54,7 @@ export async function POST(
 
   const chunks = chunkText(body.text);
   const model = createLanguageModel(body.modelConfig.text);
-  const scriptSplitSystem = await resolvePrompt("script_split", { userId, projectId });
+  const scriptSplitSystem = await resolvePrompt("script_split", { userId, projectId, locale: body.locale });
 
   await addImportLog(
     projectId, 3, "running",

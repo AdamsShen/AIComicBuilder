@@ -47,6 +47,7 @@ export async function POST(
   const body = (await request.json()) as {
     text: string;
     modelConfig: { text: ProviderConfig | null };
+    locale?: string;
   };
 
   if (!body.modelConfig?.text) {
@@ -55,7 +56,8 @@ export async function POST(
 
   const chunks = chunkText(body.text);
   const model = createLanguageModel(body.modelConfig.text);
-  const importCharSystem = await resolvePrompt("import_character_extract", { userId, projectId });
+  const locale = body.locale || request.headers.get("x-user-locale") || undefined;
+  const importCharSystem = await resolvePrompt("import_character_extract", { userId, projectId, locale });
 
   await addImportLog(
     projectId, 2, "running",

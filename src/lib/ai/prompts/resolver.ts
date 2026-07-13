@@ -2,10 +2,13 @@ import { db } from "@/lib/db";
 import { promptTemplates } from "@/lib/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { getPromptDefinition, getDefaultSlotContents } from "./registry";
+import { DEFAULT_CONTENT } from "./default-content";
 
 interface ResolveOptions {
   userId: string;
   projectId?: string;
+  /** UI locale — when set, untranslated slots fall back to their locale-specific default */
+  locale?: string;
 }
 
 /**
@@ -79,6 +82,17 @@ export async function resolvePrompt(
     );
     if (globalSlot) {
       slotContents[slotKey] = globalSlot.content;
+      continue;
+    }
+    // No override — fall back to locale-specific default if available
+    if (options.locale && options.locale !== "zh") {
+      const contentKey = `${promptKey}.${slotKey}`;
+      const translated = (
+        DEFAULT_CONTENT[contentKey] as Record<string, string> | undefined
+      )?.[options.locale];
+      if (translated) {
+        slotContents[slotKey] = translated;
+      }
     }
   }
 
@@ -128,6 +142,17 @@ export async function resolveSlotContents(
     );
     if (globalSlot) {
       slotContents[slotKey] = globalSlot.content;
+      continue;
+    }
+    // No override — fall back to locale-specific default if available
+    if (options.locale && options.locale !== "zh") {
+      const contentKey = `${promptKey}.${slotKey}`;
+      const translated = (
+        DEFAULT_CONTENT[contentKey] as Record<string, string> | undefined
+      )?.[options.locale];
+      if (translated) {
+        slotContents[slotKey] = translated;
+      }
     }
   }
 

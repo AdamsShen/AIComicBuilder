@@ -14,6 +14,7 @@ export async function handleScriptOutline(task: Task) {
     idea: string;
     modelConfig?: ModelConfigPayload;
     userId?: string;
+    locale?: string;
   };
 
   const { projectId, episodeId, idea } = payload;
@@ -21,6 +22,7 @@ export async function handleScriptOutline(task: Task) {
   const systemPrompt = await resolvePrompt("script_outline", {
     userId: payload.userId ?? "",
     projectId,
+    locale: payload.locale,
   });
 
   const ai = resolveAIProvider(payload.modelConfig);

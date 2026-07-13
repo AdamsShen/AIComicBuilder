@@ -11,6 +11,12 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   const userId = getUserId();
   const headers = new Headers(options.headers);
   if (userId) headers.set("x-user-id", userId);
+  // 透传当前 UI locale 给后端 API，避免每个调用点手动传参
+  const locale = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("NEXT_LOCALE="))
+    ?.split("=")[1];
+  if (locale) headers.set("x-user-locale", locale);
   const response = await fetch(url, {
     ...options,
     headers,

@@ -16,6 +16,7 @@ export async function handleShotSplit(task: Task) {
     modelConfig?: ModelConfigPayload;
     episodeId?: string;
     userId?: string;
+    locale?: string;
   };
 
   // Get characters for this project (include main + episode-scoped)
@@ -69,6 +70,7 @@ export async function handleShotSplit(task: Task) {
   const systemPrompt = await resolvePrompt("shot_split", {
     userId: payload.userId ?? "",
     projectId: payload.projectId,
+    locale: payload.locale,
   });
 
   const ai = resolveAIProvider(payload.modelConfig);

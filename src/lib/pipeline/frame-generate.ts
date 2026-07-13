@@ -17,6 +17,7 @@ export async function handleFrameGenerate(task: Task) {
     projectId: string;
     userId?: string;
     modelConfig?: ModelConfigPayload;
+    locale?: string;
   };
 
   const [shot] = await db
@@ -75,8 +76,8 @@ export async function handleFrameGenerate(task: Task) {
 
   const userId = payload.userId ?? "";
   const projectId = payload.projectId;
-  const frameFirstSlots = await resolveSlotContents("frame_generate_first", { userId, projectId });
-  const frameLastSlots = await resolveSlotContents("frame_generate_last", { userId, projectId });
+  const frameFirstSlots = await resolveSlotContents("frame_generate_first", { userId, projectId, locale: payload.locale });
+  const frameLastSlots = await resolveSlotContents("frame_generate_last", { userId, projectId, locale: payload.locale });
 
   // Fetch color palette from project (or episode)
   let colorPalette = "";

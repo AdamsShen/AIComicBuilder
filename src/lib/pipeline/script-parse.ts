@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 import type { Task } from "@/lib/task-queue";
 
 export async function handleScriptParse(task: Task) {
-  const payload = task.payload as { projectId: string; modelConfig?: ModelConfigPayload; userId?: string };
+  const payload = task.payload as { projectId: string; modelConfig?: ModelConfigPayload; userId?: string; locale?: string };
   const [project] = await db
     .select()
     .from(projects)
@@ -21,6 +21,7 @@ export async function handleScriptParse(task: Task) {
   const systemPrompt = await resolvePrompt("script_parse", {
     userId: payload.userId ?? "",
     projectId: payload.projectId,
+    locale: payload.locale,
   });
 
   const ai = resolveAIProvider(payload.modelConfig);
@@ -46,6 +47,7 @@ export async function handleScriptParse(task: Task) {
       screenplay: result,
       modelConfig: payload.modelConfig,
       userId: payload.userId,
+      locale: payload.locale,
     },
   });
 

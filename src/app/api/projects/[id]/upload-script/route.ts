@@ -104,6 +104,9 @@ export async function POST(
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   const modelConfigRaw = formData.get("modelConfig") as string | null;
+  const locale = (formData.get("locale") as string)
+    || request.headers.get("x-user-locale")
+    || undefined;
 
   if (!file) {
     return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -147,7 +150,7 @@ export async function POST(
   // Chunk the text
   const chunks = chunkText(fullText);
   const model = createLanguageModel(modelConfig.text);
-  const scriptSplitSystem = await resolvePrompt("script_split", { userId, projectId });
+  const scriptSplitSystem = await resolvePrompt("script_split", { userId, projectId, locale });
 
   // Process all chunks concurrently
   let episodeOffset = 0;

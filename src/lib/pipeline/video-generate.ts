@@ -22,7 +22,7 @@ async function getVersionedUploadDirFromPipeline(versionId: string | null | unde
 }
 
 export async function handleVideoGenerate(task: Task) {
-  const payload = task.payload as { shotId: string; projectId?: string; userId?: string; ratio?: string; modelConfig?: ModelConfigPayload };
+  const payload = task.payload as { shotId: string; projectId?: string; userId?: string; ratio?: string; modelConfig?: ModelConfigPayload; locale?: string };
 
   const [shot] = await db
     .select()
@@ -56,7 +56,7 @@ export async function handleVideoGenerate(task: Task) {
 
   const userId = payload.userId ?? "";
   const projectId = payload.projectId ?? shot.projectId;
-  const videoSlots = await resolveSlotContents("video_generate", { userId, projectId });
+  const videoSlots = await resolveSlotContents("video_generate", { userId, projectId, locale: payload.locale });
 
   await db
     .update(shots)

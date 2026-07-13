@@ -676,6 +676,7 @@ export default function EpisodeStoryboardPage() {
               "ref_video_prompt",
             ]}
             projectId={project.id}
+            locale={locale}
           />
           {totalShots > 0 && (
             <div className="inline-flex gap-1 rounded-xl border border-[--border-subtle] bg-[--surface] p-1">

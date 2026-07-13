@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/stores/project-store";
 import { useModelStore } from "@/stores/model-store";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Sparkles, Loader2, FileText, Lightbulb, ListOrdered } from "lucide-react";
 import { InlineModelPicker } from "@/components/editor/model-selector";
 import { AgentPicker } from "@/components/agent-picker";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 export function ScriptEditor() {
   const t = useTranslations();
+  const locale = useLocale();
   const { project, updateIdea, updateScript, fetchProject } = useProjectStore();
   const currentEpisodeId = useProjectStore((s) => s.currentEpisodeId);
   const getModelConfig = useModelStore((s) => s.getModelConfig);
@@ -248,7 +249,7 @@ export function ScriptEditor() {
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <PromptEditButton promptKeys={["script_outline", "script_generate"]} projectId={project.id} />
+          <PromptEditButton promptKeys={["script_outline", "script_generate"]} projectId={project.id} locale={locale} />
           <InlineModelPicker capability="text" />
           {saving && (
             <span className="flex items-center gap-1.5 text-xs text-[--text-muted]">

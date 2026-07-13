@@ -13,6 +13,7 @@ interface PromptEditButtonProps {
   label?: string;
   variant?: "ghost" | "outline";
   size?: "xs" | "sm";
+  locale?: string;
 }
 
 export function PromptEditButton({
@@ -21,6 +22,7 @@ export function PromptEditButton({
   label,
   variant = "outline",
   size = "sm",
+  locale,
 }: PromptEditButtonProps) {
   const [open, setOpen] = useState(false);
   const t = useTranslations("promptTemplates");
@@ -40,6 +42,7 @@ export function PromptEditButton({
         onOpenChange={setOpen}
         promptKeys={promptKeys}
         projectId={projectId}
+        locale={locale}
       />
     </>
   );

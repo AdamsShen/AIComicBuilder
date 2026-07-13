@@ -193,101 +193,104 @@ export async function POST(
     payload?: Record<string, unknown>;
     modelConfig?: ModelConfig;
     episodeId?: string;
+    locale?: string;
   };
 
-  const { action, payload, modelConfig, episodeId } = body;
-  console.log(`[Generate] action=${action}, projectId=${projectId}, episodeId=${episodeId || "none"}`);
+  const { action, payload, modelConfig, episodeId, locale: bodyLocale } = body;
+  // locale 优先从 body 取值（显式传参），fallback 到 x-user-locale header（apiFetch 自动携带）
+  const locale = bodyLocale || request.headers.get("x-user-locale") || undefined;
+  console.log(`[Generate] action=${action}, projectId=${projectId}, episodeId=${episodeId || "none"}, locale=${locale || "none"}`);
 
   if (action === "script_outline") {
-    return handleScriptOutlineAction(projectId, userId, payload, modelConfig, episodeId);
+    return handleScriptOutlineAction(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "script_generate") {
-    return handleScriptGenerate(projectId, userId, payload, modelConfig, episodeId);
+    return handleScriptGenerate(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "episode_summary") {
-    return handleEpisodeSummary(projectId, episodeId, modelConfig, userId);
+    return handleEpisodeSummary(projectId, episodeId, modelConfig, userId, locale);
   }
 
   if (action === "extract_canon") {
-    return handleExtractCanon(projectId, episodeId, modelConfig, payload, userId);
+    return handleExtractCanon(projectId, episodeId, modelConfig, payload, userId, locale);
   }
 
   if (action === "script_parse") {
-    return handleScriptParseStream(projectId, userId, modelConfig, episodeId);
+    return handleScriptParseStream(projectId, userId, modelConfig, episodeId, locale);
   }
 
   if (action === "character_extract") {
-    return handleCharacterExtract(projectId, userId, modelConfig, episodeId);
+    return handleCharacterExtract(projectId, userId, modelConfig, episodeId, locale);
   }
 
   if (action === "single_character_image") {
-    return handleSingleCharacterImage(payload, modelConfig);
+    return handleSingleCharacterImage(payload, modelConfig, locale);
   }
 
   if (action === "batch_character_image") {
-    return handleBatchCharacterImage(projectId, modelConfig, episodeId);
+    return handleBatchCharacterImage(projectId, modelConfig, episodeId, locale);
   }
 
   if (action === "shot_split") {
-    return handleShotSplitStream(projectId, userId, modelConfig, episodeId);
+    return handleShotSplitStream(projectId, userId, modelConfig, episodeId, locale);
   }
 
   if (action === "generate_keyframe_prompts") {
-    return handleGenerateKeyframePrompts(projectId, userId, payload, modelConfig, episodeId);
+    return handleGenerateKeyframePrompts(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_shot_rewrite") {
-    return handleSingleShotRewrite(projectId, payload, modelConfig, episodeId);
+    return handleSingleShotRewrite(projectId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "batch_frame_generate") {
-    return handleBatchFrameGenerate(projectId, userId, payload, modelConfig, episodeId);
+    return handleBatchFrameGenerate(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_frame_generate") {
-    return handleSingleFrameGenerate(projectId, userId, payload, modelConfig, episodeId);
+    return handleSingleFrameGenerate(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_video_generate") {
-    return handleSingleVideoGenerate(projectId, userId, payload, modelConfig);
+    return handleSingleVideoGenerate(projectId, userId, payload, modelConfig, locale);
   }
 
   if (action === "batch_video_generate") {
-    return handleBatchVideoGenerate(projectId, userId, payload, modelConfig, episodeId);
+    return handleBatchVideoGenerate(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_scene_frame") {
-    return handleSingleSceneFrame(projectId, userId, payload, modelConfig);
+    return handleSingleSceneFrame(projectId, userId, payload, modelConfig, locale);
   }
 
   if (action === "batch_scene_frame") {
-    return handleBatchSceneFrame(projectId, userId, payload, modelConfig, episodeId);
+    return handleBatchSceneFrame(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_reference_video") {
-    return handleSingleReferenceVideo(projectId, userId, payload, modelConfig);
+    return handleSingleReferenceVideo(projectId, userId, payload, modelConfig, locale);
   }
 
   if (action === "batch_reference_video") {
-    return handleBatchReferenceVideo(projectId, userId, payload, modelConfig, episodeId);
+    return handleBatchReferenceVideo(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_video_prompt") {
-    return handleSingleVideoPrompt(projectId, userId, payload, modelConfig, episodeId);
+    return handleSingleVideoPrompt(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "batch_video_prompt") {
-    return handleBatchVideoPrompt(projectId, userId, payload, modelConfig, episodeId);
+    return handleBatchVideoPrompt(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "ai_optimize_text") {
-    return handleAiOptimizeText(projectId, payload, modelConfig, episodeId, userId);
+    return handleAiOptimizeText(projectId, payload, modelConfig, episodeId, userId, locale);
   }
 
   if (action === "generate_world_setting") {
-    return handleGenerateWorldSetting(projectId, modelConfig, episodeId, userId);
+    return handleGenerateWorldSetting(projectId, modelConfig, episodeId, userId, locale);
   }
 
   if (action === "video_assemble") {
@@ -295,26 +298,26 @@ export async function POST(
   }
 
   if (action === "batch_ref_image_generate") {
-    return handleBatchRefImageGenerate(projectId, userId, payload, modelConfig, episodeId);
+    return handleBatchRefImageGenerate(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_ref_image_generate") {
-    return handleSingleRefImageGenerate(projectId, userId, payload, modelConfig);
+    return handleSingleRefImageGenerate(projectId, userId, payload, modelConfig, locale);
   }
 
   if (action === "generate_ref_prompts") {
-    return handleGenerateRefPrompts(projectId, userId, payload, modelConfig, episodeId);
+    return handleGenerateRefPrompts(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "single_ref_image_generate_all") {
-    return handleSingleShotRefImageGenerateAll(projectId, userId, payload, modelConfig);
+    return handleSingleShotRefImageGenerateAll(projectId, userId, payload, modelConfig, locale);
   }
 
   // Image/video generation - keep in task queue
   const task = await enqueueTask({
     type: action as NonNullable<TaskType>,
     projectId,
-    payload: { projectId, ...payload, modelConfig, episodeId, userId },
+    payload: { projectId, ...payload, modelConfig, episodeId, userId, locale },
     ...(episodeId ? { episodeId } : {}),
   });
 
@@ -328,7 +331,8 @@ async function handleScriptOutlineAction(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   const idea = (payload?.idea as string) || "";
   if (!idea.trim()) {
@@ -388,7 +392,7 @@ async function handleScriptOutlineAction(
   }
 
   const model = createLanguageModel(modelConfig.text);
-  const outlineSystem = await resolvePrompt("script_outline", { userId, projectId });
+  const outlineSystem = await resolvePrompt("script_outline", { userId, projectId, locale });
 
   const result = streamText({
     model,
@@ -446,11 +450,12 @@ async function autoGenerateEpisodeSummary(
   script: string,
   modelConfig?: ModelConfig,
   userId?: string,
+  locale?: string,
 ): Promise<void> {
   if (!script.trim() || !modelConfig?.text) return;
   try {
     const summarySystem = userId
-      ? await resolvePrompt("episode_summary", { userId })
+      ? await resolvePrompt("episode_summary", { userId, locale })
       : undefined;
     const summary = await summarizeScript(script, modelConfig, summarySystem);
     if (summary) {
@@ -483,7 +488,7 @@ async function postScriptGeneration(
 ): Promise<void> {
   // 外层兜底：即便子函数各自已 try/catch，仍防止任何意外 rejection 逃逸（本函数由 void 调用）
   try {
-    await autoGenerateEpisodeSummary(episodeId, script, modelConfig);
+    await autoGenerateEpisodeSummary(episodeId, script, modelConfig, undefined, locale);
     const textModel = modelConfig?.text;
     if (!script.trim() || !textModel) return;
     await checkEpisodeCoherence(projectId, episodeId, script, textModel);
@@ -499,6 +504,7 @@ async function handleEpisodeSummary(
   episodeId?: string,
   modelConfig?: ModelConfig,
   userId?: string,
+  locale?: string,
 ) {
   if (!episodeId) {
     return NextResponse.json({ error: "缺少分集" }, { status: 400 });
@@ -523,7 +529,7 @@ async function handleEpisodeSummary(
   }
   try {
     const summarySystem = userId
-      ? await resolvePrompt("episode_summary", { userId })
+      ? await resolvePrompt("episode_summary", { userId, locale })
       : undefined;
     const summary = await summarizeScript(script, modelConfig, summarySystem);
     await db
@@ -549,6 +555,7 @@ async function handleExtractCanon(
   modelConfig?: ModelConfig,
   payload?: Record<string, unknown>,
   userId?: string,
+  locale?: string,
 ) {
   if (!episodeId) {
     return NextResponse.json({ error: "缺少分集" }, { status: 400 });
@@ -585,7 +592,7 @@ async function handleExtractCanon(
   }
 
   const canonSystem = userId
-    ? await resolvePrompt("canon_extract", { userId })
+    ? await resolvePrompt("canon_extract", { userId, locale })
     : undefined;
   const added = await extractCanonFacts(projectId, episodeId, script, modelConfig.text, canonSystem);
   return NextResponse.json({ added });
@@ -596,7 +603,8 @@ async function handleScriptGenerate(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   const idea = (payload?.idea as string) || "";
   if (!idea.trim()) {
@@ -694,7 +702,7 @@ async function handleScriptGenerate(
     : "";
 
   const model = createLanguageModel(modelConfig.text);
-  const scriptGenerateSystem = await resolvePrompt("script_generate", { userId, projectId });
+  const scriptGenerateSystem = await resolvePrompt("script_generate", { userId, projectId, locale });
 
   const result = streamText({
     model,
@@ -735,7 +743,8 @@ async function handleScriptParseStream(
   projectId: string,
   userId: string,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   let script: string | null = null;
 
@@ -796,7 +805,7 @@ async function handleScriptParseStream(
   }
 
   const model = createLanguageModel(modelConfig.text);
-  const scriptParseSystem = await resolvePrompt("script_parse", { userId, projectId });
+  const scriptParseSystem = await resolvePrompt("script_parse", { userId, projectId, locale });
 
   const result = streamText({
     model,
@@ -828,7 +837,8 @@ async function handleCharacterExtract(
   projectId: string,
   userId: string,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   let script: string | null = null;
 
@@ -881,7 +891,7 @@ async function handleCharacterExtract(
       return NextResponse.json({ error: "No text model configured" }, { status: 400 });
     }
     const model = createLanguageModel(modelConfig.text);
-    const charExtractSystem = await resolvePrompt("character_extract", { userId, projectId });
+    const charExtractSystem = await resolvePrompt("character_extract", { userId, projectId, locale });
     console.log("[CharacterExtract] resolved system prompt:\n", charExtractSystem);
     const { text } = await generateText({
       model,
@@ -1027,7 +1037,8 @@ async function handleCharacterExtract(
 
 async function handleSingleCharacterImage(
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  locale?: string
 ) {
   const characterId = payload?.characterId as string;
   if (!characterId) {
@@ -1109,7 +1120,8 @@ async function handleSingleCharacterImage(
 async function handleBatchCharacterImage(
   projectId: string,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   if (!modelConfig?.image) {
     return NextResponse.json(
@@ -1175,7 +1187,8 @@ async function handleShotSplitStream(
   projectId: string,
   userId: string,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   let script: string | null = null;
   let generationMode: string = "keyframe";
@@ -1362,7 +1375,7 @@ async function handleShotSplitStream(
 
   const model = createLanguageModel(modelConfig.text);
   const videoMaxDuration = getModelMaxDuration(modelConfig?.video?.modelId);
-  const shotSplitSlots = await resolveSlotContents("shot_split", { userId, projectId });
+  const shotSplitSlots = await resolveSlotContents("shot_split", { userId, projectId, locale });
   const shotSplitDef = getPromptDefinition("shot_split")!;
   const systemPrompt = shotSplitDef.buildFullPrompt(shotSplitSlots, { maxDuration: videoMaxDuration });
   const jsonMode = { openai: { response_format: { type: "json_object" } } };
@@ -1575,7 +1588,8 @@ async function handleSingleShotRewrite(
   projectId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string;
   if (!shotId) {
@@ -1691,7 +1705,8 @@ async function handleBatchFrameGenerate(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   if (!modelConfig?.image) {
     return NextResponse.json(
@@ -1752,8 +1767,8 @@ async function handleBatchFrameGenerate(
 
   console.log(`[BatchFrameGenerate] Total: ${allShots.length} shots, need: ${needProcess.length}, skip: ${skipCount}, characters: ${frameCharacters.length}`);
 
-  const frameFirstSlots = await resolveSlotContents("frame_generate_first", { userId, projectId });
-  const frameLastSlots = await resolveSlotContents("frame_generate_last", { userId, projectId });
+  const frameFirstSlots = await resolveSlotContents("frame_generate_first", { userId, projectId, locale });
+  const frameLastSlots = await resolveSlotContents("frame_generate_last", { userId, projectId, locale });
 
   // ── Concurrent per-shot generation ──
   // Each shot is fully independent under the new shot_assets architecture:
@@ -1902,7 +1917,8 @@ async function handleSingleFrameGenerate(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string;
   if (!shotId) {
@@ -1946,8 +1962,8 @@ async function handleSingleFrameGenerate(
   const ai = resolveImageProvider(modelConfig, versionedUploadDir);
   const imageOpts = ratioToImageOpts(payload?.ratio as string | undefined);
 
-  const frameFirstSlots = await resolveSlotContents("frame_generate_first", { userId, projectId });
-  const frameLastSlots = await resolveSlotContents("frame_generate_last", { userId, projectId });
+  const frameFirstSlots = await resolveSlotContents("frame_generate_first", { userId, projectId, locale });
+  const frameLastSlots = await resolveSlotContents("frame_generate_last", { userId, projectId, locale });
 
   try {
     await db.update(shots).set({ status: "generating" }).where(eq(shots.id, shotId));
@@ -2014,7 +2030,8 @@ async function handleSingleVideoGenerate(
   projectId: string,
   userId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string;
   if (!shotId) {
@@ -2050,7 +2067,7 @@ async function handleSingleVideoGenerate(
     .orderBy(asc(dialogues.sequence));
 
   const videoProvider = resolveVideoProvider(modelConfig, versionedUploadDir);
-  const videoSlots = await resolveSlotContents("video_generate", { userId, projectId });
+  const videoSlots = await resolveSlotContents("video_generate", { userId, projectId, locale });
 
   try {
     await db.update(shots).set({ status: "generating" }).where(eq(shots.id, shotId));
@@ -2124,7 +2141,8 @@ async function handleBatchVideoGenerate(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   if (!modelConfig?.video) {
     return NextResponse.json({ error: "No video model configured" }, { status: 400 });
@@ -2162,7 +2180,7 @@ async function handleBatchVideoGenerate(
   const videoProvider = resolveVideoProvider(modelConfig, versionedUploadDir);
   const ratio = (payload?.ratio as string) || "16:9";
   const videoMaxDuration = getModelMaxDuration(modelConfig?.video?.modelId);
-  const videoSlots = await resolveSlotContents("video_generate", { userId, projectId });
+  const videoSlots = await resolveSlotContents("video_generate", { userId, projectId, locale });
 
   // Mark all as generating
   await Promise.all(
@@ -2248,7 +2266,8 @@ async function handleSingleSceneFrame(
   projectId: string,
   userId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string | undefined;
   if (!shotId) {
@@ -2269,7 +2288,7 @@ async function handleSingleSceneFrame(
     await db.update(shots).set({ status: "generating" }).where(eq(shots.id, shotId));
 
     const imageProvider = resolveImageProvider(modelConfig, versionedUploadDir);
-    const slotContents = await resolveSlotContents("scene_frame_generate", { userId, projectId });
+    const slotContents = await resolveSlotContents("scene_frame_generate", { userId, projectId, locale });
     const sceneFrameView = await loadShotLegacyView(shot.id);
     const sceneFramePrompt = buildSceneFramePrompt({
       sceneDescription: shot.prompt || "",
@@ -2330,7 +2349,8 @@ async function handleBatchSceneFrame(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   if (!modelConfig?.image) {
     return NextResponse.json({ error: "No image model configured" }, { status: 400 });
@@ -2426,7 +2446,8 @@ async function handleSingleReferenceVideo(
   projectId: string,
   userId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string | undefined;
   if (!shotId) {
@@ -2499,7 +2520,7 @@ async function handleSingleReferenceVideo(
   });
 
   const ratio = (payload?.ratio as string) || "16:9";
-  const refVideoSlots = await resolveSlotContents("ref_video_generate", { userId, projectId });
+  const refVideoSlots = await resolveSlotContents("ref_video_generate", { userId, projectId, locale });
 
   try {
     await db.update(shots).set({ status: "generating" }).where(eq(shots.id, shotId));
@@ -2561,7 +2582,7 @@ async function handleSingleReferenceVideo(
         : `图像映射：${fullMapping}。\n\n${shot.videoPrompt}`;
     } else {
       const textProvider = resolveAIProvider(modelConfig);
-      const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId });
+      const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId, locale });
       try {
         const motionContext = shot.motionScript || shot.videoScript || shot.prompt || "";
         const promptRequest = buildRefVideoPromptRequest({
@@ -2631,7 +2652,8 @@ async function handleBatchReferenceVideo(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   if (!modelConfig?.video) {
     return NextResponse.json({ error: "No video model configured" }, { status: 400 });
@@ -2684,10 +2706,10 @@ async function handleBatchReferenceVideo(
   const imageProvider = resolveImageProvider(modelConfig, versionedUploadDir);
   const videoProvider = resolveVideoProvider(modelConfig, versionedUploadDir);
   const textProvider = resolveAIProvider(modelConfig);
-  const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId });
+  const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId, locale });
   const ratio = (payload?.ratio as string) || "16:9";
   const videoMaxDuration = getModelMaxDuration(modelConfig?.video?.modelId);
-  const refVideoSlots = await resolveSlotContents("ref_video_generate", { userId, projectId });
+  const refVideoSlots = await resolveSlotContents("ref_video_generate", { userId, projectId, locale });
 
   await Promise.all(
     eligible.map((shot) =>
@@ -2980,7 +3002,8 @@ async function handleSingleVideoPrompt(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string;
   console.log(`[SingleVideoPrompt] called, shotId=${shotId}`);
@@ -3056,7 +3079,7 @@ async function handleSingleVideoPrompt(
     const videoMaxDuration = getModelMaxDuration(videoModelId);
     const effectiveDuration = Math.min(shot.duration ?? 10, videoMaxDuration);
     const textProvider = resolveAIProvider(modelConfig);
-    const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId });
+    const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId, locale });
     const motionContext = shot.motionScript || shot.videoScript || shot.prompt || "";
     // Filter to characters declared on this shot's reference assets
     const shotCharNameSetVP = new Set<string>();
@@ -3106,7 +3129,8 @@ async function handleBatchVideoPrompt(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   // === 智能体路由 ===
   // Check generation mode to decide which agent category to use
@@ -3192,7 +3216,7 @@ async function handleBatchVideoPrompt(
   }
 
   const textProvider = resolveAIProvider(modelConfig);
-  const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId });
+  const refVideoSystem = await resolvePrompt("ref_video_prompt", { userId, projectId, locale });
   const videoMaxDuration = getModelMaxDuration(modelConfig?.video?.modelId);
 
   console.log(`[BatchVideoPrompt] Processing ${eligible.length} shots (${batchShots.length} total, ${batchCharacters.length} chars, mode=${batchGenMode})`);
@@ -3303,6 +3327,7 @@ async function handleAiOptimizeText(
   modelConfig?: ModelConfig,
   episodeId?: string,
   userId?: string,
+  locale?: string,
 ) {
   const originalText = payload?.originalText as string;
   const instruction = payload?.instruction as string;
@@ -3321,7 +3346,7 @@ async function handleAiOptimizeText(
   // 从注册表解析系统提示词（有图片/无图片两个版本）
   let systemPrompt: string;
   if (userId) {
-    const slots = await resolveSlotContents("ai_optimize_text", { userId });
+    const slots = await resolveSlotContents("ai_optimize_text", { userId, locale });
     systemPrompt = images.length > 0
       ? (slots.system_prompt_with_image ?? slots.system_prompt_without_image)
       : (slots.system_prompt_without_image ?? "");
@@ -3399,6 +3424,7 @@ async function handleGenerateWorldSetting(
   modelConfig?: ModelConfig,
   episodeId?: string,
   userId?: string,
+  locale?: string,
 ) {
   if (!modelConfig?.text) {
     return NextResponse.json({ error: "No text model configured" }, { status: 400 });
@@ -3416,7 +3442,7 @@ async function handleGenerateWorldSetting(
   try {
     const model = createLanguageModel(modelConfig.text);
     const worldSystem = userId
-      ? await resolvePrompt("world_setting", { userId })
+      ? await resolvePrompt("world_setting", { userId, locale })
       : WORLD_SETTING_SYSTEM;
     const { text } = await generateText({
       model,
@@ -3452,7 +3478,8 @@ async function handleBatchRefImageGenerate(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   if (!modelConfig?.image) {
     return NextResponse.json({ error: "No image model configured" }, { status: 400 });
@@ -3532,7 +3559,8 @@ async function handleSingleRefImageGenerate(
   projectId: string,
   userId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string;
   const refImageId = payload?.refImageId as string;
@@ -3591,7 +3619,8 @@ async function handleGenerateRefPrompts(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   // === 智能体路由 ===
   const refBoundAgent = await findBoundAgent(projectId, "ref_image_prompts");
@@ -3753,7 +3782,7 @@ async function handleGenerateRefPrompts(
   }
 
   const textProvider = resolveAIProvider(modelConfig);
-  const refImageSystem = await resolvePrompt("ref_image_prompts", { userId, projectId });
+  const refImageSystem = await resolvePrompt("ref_image_prompts", { userId, projectId, locale });
   const { deleteAssetsByType } = await import("@/lib/shot-asset-utils");
 
   // Batch generation strategy — each LLM call receives a chunk of 8
@@ -3894,7 +3923,8 @@ async function handleSingleShotRefImageGenerateAll(
   projectId: string,
   userId: string,
   payload?: Record<string, unknown>,
-  modelConfig?: ModelConfig
+  modelConfig?: ModelConfig,
+  locale?: string
 ) {
   const shotId = payload?.shotId as string;
   if (!shotId) return NextResponse.json({ error: "No shotId" }, { status: 400 });
@@ -3962,7 +3992,8 @@ async function handleGenerateKeyframePrompts(
   userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
-  episodeId?: string
+  episodeId?: string,
+  locale?: string
 ) {
   // === 智能体路由 ===
   const kpBoundAgent = await findBoundAgent(projectId, "keyframe_prompts");
@@ -4108,6 +4139,7 @@ async function handleGenerateKeyframePrompts(
   const keyframeSystemPrompt = await resolvePrompt("shot_split_keyframe_assets", {
     userId,
     projectId,
+    locale,
   });
 
   // Concurrent per-shot generation: each shot is one LLM call, all run in parallel.

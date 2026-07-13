@@ -46,6 +46,8 @@ export async function GET() {
         status: stripeSub.status,
         interval: stripeSub.interval,
         priceId: stripeSub.stripePriceId,
+        amount: stripeSub.amount,
+        currency: stripeSub.currency,
         currentPeriodStart: stripeSub.currentPeriodStart,
         currentPeriodEnd: stripeSub.currentPeriodEnd,
         cancelAtPeriodEnd: stripeSub.cancelAtPeriodEnd,

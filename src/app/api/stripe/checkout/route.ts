@@ -20,9 +20,11 @@ export async function POST(request: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.BETTER_AUTH_URL}/?checkout=success`,
       cancel_url: `${process.env.BETTER_AUTH_URL}/pricing?checkout=canceled`,
-      metadata: {
-        userId: session.user.id,
-        interval,
+      subscription_data: {
+        metadata: {
+          userId: session.user.id,
+          interval,
+        },
       },
       payment_method_types: ["card", "link"],
       allow_promotion_codes: true,

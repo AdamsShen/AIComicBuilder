@@ -9,6 +9,8 @@ interface StripeInfo {
   status: string;
   interval: "month" | "year";
   priceId: string;
+  amount: number | null;
+  currency: string | null;
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
@@ -62,8 +64,9 @@ function formatDateTime(dateStr: string | null): string {
   return `${d.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" })} ${d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
-function formatAmount(cents: number): string {
-  return `¥${(cents / 100).toFixed(2)}`;
+function formatAmount(amount: number, currency: string): string {
+  const symbol = currency === "usd" ? "$" : "¥";
+  return `${symbol}${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
 }
 
 function intervalLabel(interval: "month" | "year"): string {
@@ -82,8 +85,8 @@ function buildBillingItems(stripe: StripeInfo | null, alipay: AlipayInfoItem[]):
       id: `stripe-${stripe.id}`,
       type: "stripe",
       title: `Stripe 订阅 · ${intervalLabel(stripe.interval)}付`,
-      amount: null,
-      currency: "USD",
+      amount: stripe.amount,
+      currency: stripe.currency || "USD",
       interval: stripe.interval,
       statusLabel: isActive ? "有效" : stripe.status === "canceled" ? "已取消" : stripe.status,
       statusColor: isActive ? "text-green-600" : stripe.status === "canceled" ? "text-gray-400" : "text-amber-600",
@@ -217,7 +220,7 @@ function AlipayDetail({ raw }: { raw: AlipayInfoItem }) {
     <div className="space-y-3">
       <Row label="订单号" value={raw.outTradeNo} mono />
       {raw.alipayTradeNo && <Row label="支付宝交易号" value={raw.alipayTradeNo} mono />}
-      <Row label="金额" value={formatAmount(raw.amount)} />
+      <Row label="金额" value={formatAmount(raw.amount, "cny")} />
       <Row label="周期" value={intervalLabel(raw.interval) + "付"} />
       <Row label="开始时间" value={formatDateTime(raw.periodStart)} />
       <Row label="到期时间" value={formatDateTime(raw.periodEnd)} />
@@ -346,7 +349,7 @@ export default function BillingPage() {
                     </span>
                     {item.amount != null && (
                       <span className="text-[--text-primary] font-medium">
-                        {formatAmount(item.amount)}
+                        {formatAmount(item.amount, item.currency)}
                       </span>
                     )}
                   </div>

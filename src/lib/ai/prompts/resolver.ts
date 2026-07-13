@@ -12,6 +12,39 @@ interface ResolveOptions {
 }
 
 /**
+ * 查询某 slot 在指定 locale 下的翻译默认内容。
+ * 无 locale、为 zh、或该 locale 无翻译时返回 undefined（由调用方回退到代码默认值）。
+ */
+function getLocaleDefaultContent(
+  promptKey: string,
+  slotKey: string,
+  locale?: string
+): string | undefined {
+  if (!locale || locale === "zh") return undefined;
+  const contentKey = `${promptKey}.${slotKey}`;
+  return (DEFAULT_CONTENT[contentKey] as Record<string, string> | undefined)?.[
+    locale
+  ];
+}
+
+/**
+ * 返回指定 locale 的 slot 翻译内容。
+ * locale 为空或 zh 时返回 undefined（调用方保留 registry 的中文默认值）；
+ * 找不到该 locale 的翻译时也返回 undefined，不回退到 en/zh。
+ */
+function getLocaleSlotContent(
+  promptKey: string,
+  slotKey: string,
+  locale?: string
+): string | undefined {
+  if (!locale || locale === "zh") return undefined;
+  const contentKey = `${promptKey}.${slotKey}`;
+  return (
+    DEFAULT_CONTENT[contentKey] as Record<string, string> | undefined
+  )?.[locale];
+}
+
+/**
  * Resolve a prompt's system content by merging:
  *   project-level overrides > global overrides > code defaults
  */

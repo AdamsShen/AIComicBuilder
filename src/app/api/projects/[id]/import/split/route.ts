@@ -54,7 +54,9 @@ export async function POST(
 
   const chunks = chunkText(body.text);
   const model = createLanguageModel(body.modelConfig.text);
-  const scriptSplitSystem = await resolvePrompt("script_split", { userId, projectId, locale: body.locale });
+  // locale 优先从 body 显式传参，回退到 apiFetch 自动携带的 x-user-locale header
+  const locale = body.locale || request.headers.get("x-user-locale") || undefined;
+  const scriptSplitSystem = await resolvePrompt("script_split", { userId, projectId, locale });
 
   await addImportLog(
     projectId, 3, "running",

@@ -785,7 +785,11 @@ Below is a high-quality reference video prompt from Seedance official documentat
 3. **核心规则/法则**（2-3 句）：这个世界运行的关键规则——可指物理法则、魔法规则、科技限制、社会禁忌等。若有超自然元素，写清楚其边界与代价，避免模糊。
 4. **基调与氛围**（1-2 句）：故事的整体情绪调性（悬疑/热血/黑暗/治愈 等），视觉风格倾向。
 
-输出格式：严格输出以下 JSON，不要附加任何其他文字：{"worldSetting": "一段 120-280 字的中文世界观设定，按段落组织，不分点不编号。语气为客观叙述。"}`,
+输出格式：
+严格输出以下 JSON，不要附加任何其他文字：
+{
+  "worldSetting": "一段 120-280 字的中文世界观设定，按段落组织，不分点不编号。语气为客观叙述，不使用'你将'、'注意'等指令性表达。"
+}`,
     en: `You are a senior fictional world architect and genre literature consultant. Your task is to write a clear, solid, frame-ready world setting for the given story project.
 
 You must strictly base your worldbuilding on the three data sources provided below — do not fabricate core settings beyond the scope of the material:
@@ -849,10 +853,10 @@ Output format: Strictly output the following JSON with no additional text: {"wor
 - 恒定：一旦确立，后续各集都不该改变（年龄、亲缘、死亡、外观定档特征、关键道具归属与纹样、地名与归属等）。
 
 ═══ 抽取范围（按类别）═══
-- timeline（时间线）：关键事件及其发生时的人物**年龄/时序**。
-- character（角色设定）：定档不变的属性。
-- prop（关键道具）：有辨识特征、跨集复现的道具及其归属。
-- location（地点）：重要地点及其归属/状态。
+- timeline（时间线）：关键事件及其发生时的人物**年龄/时序**。例："屠村时阿离10岁""阿离15岁在荒原商道遇墨渊"。务必写清年龄或先后顺序。
+- character（角色设定）：定档不变的属性——性别、与主角关系、致命经历、身体标记。例："嬴桀45岁，右脸有旧疤""墨渊曾是嬴桀的国师，被其废去修为"。
+- prop（关键道具）：有辨识特征、跨集复现的道具及其归属。例："猎刀是老爹遗物，阿离随身携带""嬴桀左手中指血玉扳指，内圈古纹与阿离母亲平安结纹样相同"。
+- location（地点）：重要地点及其归属/状态。例："阿琅村被嬴桀军队屠灭"。
 - faction（派系）：势力、组织及其立场。
 - other：不属以上但确需锁定的事实。
 

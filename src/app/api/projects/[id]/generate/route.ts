@@ -3,7 +3,7 @@ import { streamText, generateText } from "ai";
 import { createLanguageModel, extractJSON } from "@/lib/ai/ai-sdk";
 import type { ProviderConfig } from "@/lib/ai/ai-sdk";
 import { db } from "@/lib/db";
-import { projects, episodes, characters, shots, dialogues, storyboardVersions, episodeCharacters, characterRelations, agentBindings, agents } from "@/lib/db/schema";
+import { projects, episodes, characters, shots, dialogues, storyboardVersions, episodeCharacters, characterRelations, agentBindings, agents, canonFacts } from "@/lib/db/schema";
 import { callAgent, callAgentStream, validateAgentOutput, type AgentCategory } from "@/lib/ai/agent-caller";
 import { buildEpisodeMemoryContext } from "@/lib/ai/memory-context";
 import { extractCanonFacts } from "@/lib/canon/extract";
@@ -488,7 +488,7 @@ async function postScriptGeneration(
 ): Promise<void> {
   // 外层兜底：即便子函数各自已 try/catch，仍防止任何意外 rejection 逃逸（本函数由 void 调用）
   try {
-    await autoGenerateEpisodeSummary(episodeId, script, modelConfig, undefined, locale);
+    await autoGenerateEpisodeSummary(episodeId, script, modelConfig);
     const textModel = modelConfig?.text;
     if (!script.trim() || !textModel) return;
     await checkEpisodeCoherence(projectId, episodeId, script, textModel);
@@ -3451,8 +3451,14 @@ async function handleGenerateWorldSetting(
       temperature: 0.6,
     });
 
-    const parsed = extractJSON(text);
-    const worldSetting = (parsed as Record<string, unknown>)?.worldSetting as string | undefined;
+    let worldSetting: string | undefined;
+    try {
+      const parsed = JSON.parse(extractJSON(text)) as Record<string, unknown>;
+      worldSetting = parsed?.worldSetting as string | undefined;
+    } catch (err) {
+      console.error("[generateWorldSetting] JSON parse failed:", err);
+      return NextResponse.json({ error: "AI 未能生成有效世界观，请重试" }, { status: 422 });
+    }
     if (!worldSetting || !worldSetting.trim()) {
       return NextResponse.json({ error: "AI 未能生成有效世界观，请重试" }, { status: 422 });
     }

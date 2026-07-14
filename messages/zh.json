@@ -617,6 +617,58 @@
     "manageSubscription": "管理订阅",
     "wallet": "钱包"
   },
+  "billing": {
+    "title": "订阅管理",
+    "back": "返回",
+    "empty": "暂无订阅记录",
+    "loading": "加载失败",
+    "detailTitle": "订阅详情",
+    "stripeLabel": "Stripe 订阅",
+    "alipayLabel": "支付宝",
+    "subscription": {
+      "withMonthly": "Stripe 订阅 · 月付",
+      "withYearly": "Stripe 订阅 · 年付",
+      "alipayMonthly": "支付宝 · 月付会员",
+      "alipayYearly": "支付宝 · 年付会员"
+    },
+    "interval": {
+      "month": "月",
+      "year": "年"
+    },
+    "status": {
+      "active": "有效",
+      "trialing": "试用中",
+      "past_due": "逾期",
+      "canceled": "已取消",
+      "incomplete": "未完成",
+      "incomplete_expired": "已过期",
+      "unpaid": "未支付",
+      "expired": "已过期"
+    },
+    "dateLabel": {
+      "expires": "到期",
+      "canceledAt": "取消于",
+      "createdAt": "创建于",
+      "paidAt": "支付于"
+    },
+    "detail": {
+      "subscriptionId": "订阅 ID",
+      "status": "状态",
+      "interval": "周期",
+      "periodStart": "当前周期开始",
+      "periodEnd": "当前周期结束",
+      "canceledAt": "取消时间",
+      "createdAt": "创建时间",
+      "cancelNotice": "订阅将于当前周期结束后取消",
+      "orderNo": "订单号",
+      "alipayTradeNo": "支付宝交易号",
+      "amount": "金额",
+      "startTime": "开始时间",
+      "endTime": "到期时间",
+      "payTime": "支付时间"
+    },
+    "stripePortal": "管理订阅（Stripe 门户）"
+  },
   "wallet": {
     "title": "钱包",
     "balance": "余额",

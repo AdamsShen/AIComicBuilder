@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, CreditCard, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 
 interface StripeInfo {
@@ -31,37 +33,30 @@ interface AlipayInfoItem {
 interface BillingItem {
   id: string;
   type: "stripe" | "alipay";
-  /** 显示标题 */
   title: string;
-  /** 金额（分），alipay 直接有，stripe 无直接金额展示为 null */
   amount: number | null;
-  /** 金额单位 */
   currency: string;
-  /** 周期 */
   interval: "month" | "year";
-  /** 状态标签 */
   statusLabel: string;
   statusColor: string;
-  /** 展示日期 */
   dateLabel: string;
   date: string | null;
-  /** 原始数据，供详情弹窗 */
   raw: StripeInfo | AlipayInfoItem;
 }
 
-function formatDate(dateStr: string | null): string {
+function formatDate(dateStr: string | null, locale: string): string {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("zh-CN", {
+  return new Date(dateStr).toLocaleDateString(locale, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   });
 }
 
-function formatDateTime(dateStr: string | null): string {
+function formatDateTime(dateStr: string | null, locale: string): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
-  return `${d.toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" })} ${d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}`;
+  return `${d.toLocaleDateString(locale, { year: "numeric", month: "2-digit", day: "2-digit" })} ${d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}`;
 }
 
 function formatAmount(amount: number, currency: string): string {
@@ -69,11 +64,11 @@ function formatAmount(amount: number, currency: string): string {
   return `${symbol}${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
 }
 
-function intervalLabel(interval: "month" | "year"): string {
-  return interval === "year" ? "年" : "月";
-}
-
-function buildBillingItems(stripe: StripeInfo | null, alipay: AlipayInfoItem[]): BillingItem[] {
+function buildBillingItems(
+  stripe: StripeInfo | null,
+  alipay: AlipayInfoItem[],
+  t: ReturnType<typeof useTranslations<"billing">>,
+): BillingItem[] {
   const items: BillingItem[] = [];
 
   if (stripe) {
@@ -81,16 +76,31 @@ function buildBillingItems(stripe: StripeInfo | null, alipay: AlipayInfoItem[]):
     const periodEnd = new Date(stripe.currentPeriodEnd).getTime();
     const isActive = ["active", "trialing"].includes(stripe.status) && periodEnd > now;
 
+    const titleKey =
+      stripe.interval === "year" ? "subscription.withYearly" : "subscription.withMonthly";
+
     items.push({
       id: `stripe-${stripe.id}`,
       type: "stripe",
-      title: `Stripe 订阅 · ${intervalLabel(stripe.interval)}付`,
+      title: t(titleKey as any),
       amount: stripe.amount,
       currency: stripe.currency || "USD",
       interval: stripe.interval,
-      statusLabel: isActive ? "有效" : stripe.status === "canceled" ? "已取消" : stripe.status,
-      statusColor: isActive ? "text-green-600" : stripe.status === "canceled" ? "text-gray-400" : "text-amber-600",
-      dateLabel: isActive ? "到期" : stripe.canceledAt ? "取消于" : "创建于",
+      statusLabel: isActive
+        ? t("status.active")
+        : stripe.status === "canceled"
+          ? t("status.canceled")
+          : t(`status.${stripe.status}` as any),
+      statusColor: isActive
+        ? "text-green-600"
+        : stripe.status === "canceled"
+          ? "text-gray-400"
+          : "text-amber-600",
+      dateLabel: isActive
+        ? t("dateLabel.expires")
+        : stripe.canceledAt
+          ? t("dateLabel.canceledAt")
+          : t("dateLabel.createdAt"),
       date: isActive ? stripe.currentPeriodEnd : stripe.canceledAt || stripe.createdAt,
       raw: stripe,
     });
@@ -98,49 +108,52 @@ function buildBillingItems(stripe: StripeInfo | null, alipay: AlipayInfoItem[]):
 
   for (const order of alipay) {
     const isActive = order.periodEnd ? new Date(order.periodEnd).getTime() > Date.now() : false;
+    const titleKey =
+      order.interval === "year" ? "subscription.alipayYearly" : "subscription.alipayMonthly";
+
     items.push({
       id: `alipay-${order.outTradeNo}`,
       type: "alipay",
-      title: `支付宝 · ${intervalLabel(order.interval)}付会员`,
+      title: t(titleKey as any),
       amount: order.amount,
       currency: "CNY",
       interval: order.interval,
-      statusLabel: isActive ? "有效" : "已过期",
+      statusLabel: isActive ? t("status.active") : t("status.expired"),
       statusColor: isActive ? "text-green-600" : "text-gray-400",
-      dateLabel: isActive ? "到期" : "支付于",
+      dateLabel: isActive ? t("dateLabel.expires") : t("dateLabel.paidAt"),
       date: isActive ? order.periodEnd : order.paidAt,
       raw: order,
     });
   }
 
-  // 按日期倒序
   items.sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   return items;
 }
 
-/** 详情弹窗 */
 function DetailSheet({
   item,
   onClose,
   onStripePortal,
   portalLoading,
+  t,
+  locale,
 }: {
   item: BillingItem;
   onClose: () => void;
   onStripePortal: () => void;
   portalLoading: boolean;
+  t: ReturnType<typeof useTranslations<"billing">>;
+  locale: string;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
-      {/* backdrop */}
       <div className="absolute inset-0 bg-black/20" />
-      {/* sheet */}
       <div
         className="relative w-full max-w-md bg-white shadow-2xl overflow-y-auto animate-slide-in-right"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-xl border-b border-[--border-subtle] px-5 py-4 flex items-center justify-between">
-          <h3 className="font-display text-sm font-semibold">账单详情</h3>
+          <h3 className="font-display text-sm font-semibold">{t("detailTitle")}</h3>
           <button
             onClick={onClose}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-[--text-muted] hover:bg-[--surface]"
@@ -150,22 +163,19 @@ function DetailSheet({
         </div>
 
         <div className="p-5 space-y-4">
-          {/* 标题行 */}
           <div>
             <p className="text-xs text-[--text-muted]">
-              {item.type === "stripe" ? "Stripe 订阅" : "支付宝"}
+              {item.type === "stripe" ? t("stripeLabel") : t("alipayLabel")}
             </p>
-            <p className="text-lg font-semibold text-[--text-primary] mt-0.5">
-              {item.title}
-            </p>
+            <p className="text-lg font-semibold text-[--text-primary] mt-0.5">{item.title}</p>
           </div>
 
           <div className="border-t border-[--border-subtle]" />
 
           {item.type === "stripe" ? (
-            <StripeDetail raw={item.raw as StripeInfo} />
+            <StripeDetail raw={item.raw as StripeInfo} t={t} locale={locale} />
           ) : (
-            <AlipayDetail raw={item.raw as AlipayInfoItem} />
+            <AlipayDetail raw={item.raw as AlipayInfoItem} t={t} locale={locale} />
           )}
 
           {item.type === "stripe" && (
@@ -176,7 +186,7 @@ function DetailSheet({
                 className="w-full h-10 rounded-xl bg-[#635BFF] text-white text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {portalLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                管理订阅（Stripe 门户）
+                {t("stripePortal")}
               </button>
             </div>
           )}
@@ -186,45 +196,67 @@ function DetailSheet({
   );
 }
 
-function StripeDetail({ raw }: { raw: StripeInfo }) {
+function StripeDetail({
+  raw,
+  t,
+  locale,
+}: {
+  raw: StripeInfo;
+  t: ReturnType<typeof useTranslations<"billing">>;
+  locale: string;
+}) {
   const statusMap: Record<string, string> = {
-    active: "有效",
-    trialing: "试用中",
-    past_due: "逾期",
-    canceled: "已取消",
-    incomplete: "未完成",
-    incomplete_expired: "已过期",
-    unpaid: "未支付",
+    active: t("status.active"),
+    trialing: t("status.trialing"),
+    past_due: t("status.past_due"),
+    canceled: t("status.canceled"),
+    incomplete: t("status.incomplete"),
+    incomplete_expired: t("status.incomplete_expired"),
+    unpaid: t("status.unpaid"),
   };
 
   return (
     <div className="space-y-3">
-      <Row label="订阅 ID" value={raw.id} mono />
-      <Row label="状态" value={statusMap[raw.status] || raw.status} />
-      <Row label="周期" value={intervalLabel(raw.interval) + "付"} />
-      <Row label="当前周期开始" value={formatDate(raw.currentPeriodStart)} />
-      <Row label="当前周期结束" value={formatDate(raw.currentPeriodEnd)} />
+      <Row label={t("detail.subscriptionId")} value={raw.id} mono />
+      <Row label={t("detail.status")} value={statusMap[raw.status] || raw.status} />
+      <Row
+        label={t("detail.interval")}
+        value={t(`interval.${raw.interval}` as any)}
+      />
+      <Row label={t("detail.periodStart")} value={formatDate(raw.currentPeriodStart, locale)} />
+      <Row label={t("detail.periodEnd")} value={formatDate(raw.currentPeriodEnd, locale)} />
       {raw.cancelAtPeriodEnd && (
         <div className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-          订阅将于当前周期结束后取消
+          {t("detail.cancelNotice")}
         </div>
       )}
-      {raw.canceledAt && <Row label="取消时间" value={formatDateTime(raw.canceledAt)} />}
-      <Row label="创建时间" value={formatDateTime(raw.createdAt)} />
+      {raw.canceledAt && <Row label={t("detail.canceledAt")} value={formatDateTime(raw.canceledAt, locale)} />}
+      <Row label={t("detail.createdAt")} value={formatDateTime(raw.createdAt, locale)} />
     </div>
   );
 }
 
-function AlipayDetail({ raw }: { raw: AlipayInfoItem }) {
+function AlipayDetail({
+  raw,
+  t,
+  locale,
+}: {
+  raw: AlipayInfoItem;
+  t: ReturnType<typeof useTranslations<"billing">>;
+  locale: string;
+}) {
   return (
     <div className="space-y-3">
-      <Row label="订单号" value={raw.outTradeNo} mono />
-      {raw.alipayTradeNo && <Row label="支付宝交易号" value={raw.alipayTradeNo} mono />}
-      <Row label="金额" value={formatAmount(raw.amount, "cny")} />
-      <Row label="周期" value={intervalLabel(raw.interval) + "付"} />
-      <Row label="开始时间" value={formatDateTime(raw.periodStart)} />
-      <Row label="到期时间" value={formatDateTime(raw.periodEnd)} />
-      <Row label="支付时间" value={formatDateTime(raw.paidAt)} />
+      <Row label={t("detail.orderNo")} value={raw.outTradeNo} mono />
+      {raw.alipayTradeNo && <Row label={t("detail.alipayTradeNo")} value={raw.alipayTradeNo} mono />}
+      <Row label={t("detail.amount")} value={formatAmount(raw.amount, "cny")} />
+      <Row
+        label={t("detail.interval")}
+        value={t(`interval.${raw.interval}` as any)}
+      />
+      <Row label={t("detail.startTime")} value={formatDateTime(raw.periodStart, locale)} />
+      <Row label={t("detail.endTime")} value={formatDateTime(raw.periodEnd, locale)} />
+      <Row label={t("detail.payTime")} value={formatDateTime(raw.paidAt, locale)} />
     </div>
   );
 }
@@ -244,6 +276,9 @@ function Row({ label, value, mono }: { label: string; value: string; mono?: bool
 
 export default function BillingPage() {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) ?? "zh";
+  const t = useTranslations("billing");
   const [items, setItems] = useState<BillingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -254,11 +289,11 @@ export default function BillingPage() {
     (async () => {
       try {
         const res = await fetch("/api/billing");
-        if (!res.ok) throw new Error("获取账单信息失败");
+        if (!res.ok) throw new Error(t("loading"));
         const data = await res.json();
-        setItems(buildBillingItems(data.stripe, data.alipay));
+        setItems(buildBillingItems(data.stripe, data.alipay, t));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "加载失败");
+        setError(err instanceof Error ? err.message : t("loading"));
       } finally {
         setLoading(false);
       }
@@ -293,11 +328,8 @@ export default function BillingPage() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-3">
         <AlertCircle className="h-8 w-8 text-[--text-muted]" />
         <p className="text-sm text-[--text-muted]">{error}</p>
-        <button
-          className="text-sm text-[--primary]"
-          onClick={() => router.back()}
-        >
-          返回
+        <button className="text-sm text-[--primary]" onClick={() => router.back()}>
+          {t("back")}
         </button>
       </div>
     );
@@ -305,7 +337,6 @@ export default function BillingPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Header */}
       <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between border-b border-[--border-subtle] bg-white/80 backdrop-blur-xl px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <button
@@ -315,7 +346,7 @@ export default function BillingPage() {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <span className="font-display text-sm font-semibold text-[--text-primary]">
-            订阅管理
+            {t("title")}
           </span>
         </div>
       </header>
@@ -324,7 +355,7 @@ export default function BillingPage() {
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <CreditCard className="h-10 w-10 text-[--text-muted]" />
-            <p className="text-sm text-[--text-muted]">暂无账单记录</p>
+            <p className="text-sm text-[--text-muted]">{t("empty")}</p>
           </div>
         ) : (
           <div className="divide-y divide-[--border-subtle]">
@@ -345,7 +376,7 @@ export default function BillingPage() {
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[--text-muted]">
                     <span>
-                      {item.dateLabel} {formatDate(item.date)}
+                      {item.dateLabel} {formatDate(item.date, locale)}
                     </span>
                     {item.amount != null && (
                       <span className="text-[--text-primary] font-medium">
@@ -361,13 +392,14 @@ export default function BillingPage() {
         )}
       </main>
 
-      {/* 详情侧边弹窗 */}
       {selected && (
         <DetailSheet
           item={selected}
           onClose={() => setSelected(null)}
           onStripePortal={handleStripePortal}
           portalLoading={portalLoading}
+          t={t}
+          locale={locale}
         />
       )}
     </div>

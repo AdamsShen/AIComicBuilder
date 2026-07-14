@@ -616,6 +616,58 @@
     "manageSubscription": "サブスクリプション管理",
     "wallet": "ウォレット"
   },
+  "billing": {
+    "title": "サブスクリプション",
+    "back": "戻る",
+    "empty": "サブスクリプションがありません",
+    "loading": "読み込みに失敗しました",
+    "detailTitle": "サブスクリプション詳細",
+    "stripeLabel": "Stripe",
+    "alipayLabel": "Alipay",
+    "subscription": {
+      "withMonthly": "Stripe · 月額",
+      "withYearly": "Stripe · 年額",
+      "alipayMonthly": "Alipay · 月額",
+      "alipayYearly": "Alipay · 年額"
+    },
+    "interval": {
+      "month": "月",
+      "year": "年"
+    },
+    "status": {
+      "active": "有効",
+      "trialing": "トライアル中",
+      "past_due": "延滞",
+      "canceled": "解約済み",
+      "incomplete": "未完了",
+      "incomplete_expired": "期限切れ",
+      "unpaid": "未払い",
+      "expired": "期限切れ"
+    },
+    "dateLabel": {
+      "expires": "有効期限",
+      "canceledAt": "解約日",
+      "createdAt": "作成日",
+      "paidAt": "支払日"
+    },
+    "detail": {
+      "subscriptionId": "サブスクリプション ID",
+      "status": "ステータス",
+      "interval": "周期",
+      "periodStart": "期間開始",
+      "periodEnd": "期間終了",
+      "canceledAt": "解約日時",
+      "createdAt": "作成日時",
+      "cancelNotice": "現在の期間終了後にサブスクリプションが解約されます",
+      "orderNo": "注文番号",
+      "alipayTradeNo": "Alipay 取引番号",
+      "amount": "金額",
+      "startTime": "開始日時",
+      "endTime": "終了日時",
+      "payTime": "支払日時"
+    },
+    "stripePortal": "サブスクリプション管理（Stripe ポータル）"
+  },
   "wallet": {
     "title": "ウォレット",
     "balance": "残高",

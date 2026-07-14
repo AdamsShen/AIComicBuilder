@@ -616,6 +616,58 @@
     "manageSubscription": "Manage Subscription",
     "wallet": "Wallet"
   },
+  "billing": {
+    "title": "Subscription",
+    "back": "Back",
+    "empty": "No subscriptions",
+    "loading": "Failed to load",
+    "detailTitle": "Subscription Details",
+    "stripeLabel": "Stripe",
+    "alipayLabel": "Alipay",
+    "subscription": {
+      "withMonthly": "Stripe · Monthly",
+      "withYearly": "Stripe · Yearly",
+      "alipayMonthly": "Alipay · Monthly",
+      "alipayYearly": "Alipay · Yearly"
+    },
+    "interval": {
+      "month": "mo",
+      "year": "yr"
+    },
+    "status": {
+      "active": "Active",
+      "trialing": "Trialing",
+      "past_due": "Past Due",
+      "canceled": "Canceled",
+      "incomplete": "Incomplete",
+      "incomplete_expired": "Expired",
+      "unpaid": "Unpaid",
+      "expired": "Expired"
+    },
+    "dateLabel": {
+      "expires": "Expires",
+      "canceledAt": "Canceled",
+      "createdAt": "Created",
+      "paidAt": "Paid"
+    },
+    "detail": {
+      "subscriptionId": "Subscription ID",
+      "status": "Status",
+      "interval": "Interval",
+      "periodStart": "Period Start",
+      "periodEnd": "Period End",
+      "canceledAt": "Canceled At",
+      "createdAt": "Created At",
+      "cancelNotice": "Subscription will be canceled at the end of the current period",
+      "orderNo": "Order No.",
+      "alipayTradeNo": "Alipay Trade No.",
+      "amount": "Amount",
+      "startTime": "Start",
+      "endTime": "End",
+      "payTime": "Paid At"
+    },
+    "stripePortal": "Manage Subscription (Stripe Portal)"
+  },
   "wallet": {
     "title": "Wallet",
     "balance": "Balance",

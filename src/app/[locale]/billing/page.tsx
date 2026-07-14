@@ -315,7 +315,7 @@ export default function BillingPage() {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <span className="font-display text-sm font-semibold text-[--text-primary]">
-            账单管理
+            订阅管理
           </span>
         </div>
       </header>

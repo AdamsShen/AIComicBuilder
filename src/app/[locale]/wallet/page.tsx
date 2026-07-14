@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { BalanceCard } from "./_components/balance-card";
 import { TransactionList } from "./_components/transaction-list";
 import { RechargeDialog } from "./_components/recharge-dialog";
@@ -26,6 +27,7 @@ const PAGE_SIZE = 20;
 
 function WalletPageInner() {
   const t = useTranslations("wallet");
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +58,6 @@ function WalletPageInner() {
 
   useEffect(() => {
     fetchData().finally(() => setLoading(false));
-    // fetchData 引用稳定（只依赖 data.records.length，初始化时只调一次）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -73,39 +74,40 @@ function WalletPageInner() {
   }
 
   return (
-    <div className="animate-page-in mx-auto max-w-2xl space-y-6">
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[--primary]/10">
-          <svg
-            className="h-4 w-4 text-[--primary]"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
+      <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between border-b border-[--border-subtle] bg-white/80 backdrop-blur-xl px-4 lg:px-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-primary]"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" />
-          </svg>
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <span className="font-display text-sm font-semibold text-[--text-primary]">
+            {t("title")}
+          </span>
         </div>
-        <h2 className="font-display text-xl font-bold tracking-tight text-[--text-primary]">
-          {t("title")}
-        </h2>
-      </div>
+      </header>
 
-      {/* Balance card */}
-      <BalanceCard
-        balance={data?.balance ?? 0}
-        onRecharge={() => setShowRecharge(true)}
-        loading={loading}
-      />
+      <main className="flex-1 bg-[--surface] p-6 lg:p-8">
+        <div className="mx-auto max-w-2xl space-y-6">
+          {/* Balance card */}
+          <BalanceCard
+            balance={data?.balance ?? 0}
+            onRecharge={() => setShowRecharge(true)}
+            loading={loading}
+          />
 
-      {/* Transaction list */}
-      <TransactionList
-        records={data?.records ?? []}
-        hasMore={hasMore}
-        onLoadMore={handleLoadMore}
-        loading={loadingMore}
-      />
+          {/* Transaction list */}
+          <TransactionList
+            records={data?.records ?? []}
+            hasMore={hasMore}
+            onLoadMore={handleLoadMore}
+            loading={loadingMore}
+          />
+        </div>
+      </main>
 
       {/* Recharge dialog */}
       <RechargeDialog open={showRecharge} onOpenChange={setShowRecharge} />

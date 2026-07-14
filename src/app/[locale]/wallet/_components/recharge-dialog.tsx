@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { STRIPE_TOPUP_AMOUNTS, ALIPAY_TOPUP_AMOUNTS, centsToYuan, usdToCnyDisplay } from "@/lib/wallet-plans";
+import { STRIPE_TOPUP_AMOUNTS, ALIPAY_TOPUP_AMOUNTS, centsToYuan } from "@/lib/wallet-plans";
 
 interface RechargeDialogProps {
   open: boolean;
@@ -27,24 +27,15 @@ export function RechargeDialog({ open, onOpenChange }: RechargeDialogProps) {
 
   const amounts = provider === "stripe" ? STRIPE_TOPUP_AMOUNTS : ALIPAY_TOPUP_AMOUNTS;
   const finalAmount = selectedAmount ?? (customAmount ? Number(customAmount) * 100 : null);
-  // Stripe 页面前端显示美元金额，提交时发美元分值，后端 webhook 汇转人民币入账；
-  // Alipay 页面前后端都是人民币。
-  const currencySymbol = provider === "stripe" ? "$" : "¥";
 
   function displayAmount(amtCents: number): string {
-    if (provider === "stripe") {
-      // 显示：$10.00 ≈ ¥72.50
-      return `$${centsToYuan(amtCents)} ≈ ${usdToCnyDisplay(amtCents)}`;
-    }
+    if (provider === "stripe") return `$${centsToYuan(amtCents)}`;
     return `¥${centsToYuan(amtCents)}`;
   }
 
   function displayFinalLabel(): string {
     if (!finalAmount) return "0.00";
-    if (provider === "stripe") {
-      return `${currencySymbol}${centsToYuan(finalAmount)} ≈ ${usdToCnyDisplay(finalAmount)}`;
-    }
-    return `${currencySymbol}${centsToYuan(finalAmount)}`;
+    return displayAmount(finalAmount);
   }
 
   async function handleSubmit() {

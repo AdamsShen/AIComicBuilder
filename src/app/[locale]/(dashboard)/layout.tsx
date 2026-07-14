@@ -4,7 +4,7 @@ import { LogoIcon } from "@/components/logo";
 import { UserMenu } from "@/components/auth/user-menu";
 import { requirePlan } from "@/lib/auth/guard";
 import Link from "next/link";
-import { Settings, Wand2 } from "lucide-react";
+import { Settings, Wand2, Wallet } from "lucide-react";
 
 export default async function DashboardLayout({
   children,
@@ -26,6 +26,13 @@ export default async function DashboardLayout({
           </span>
         </Link>
         <div className="flex items-center gap-2">
+          <Link
+            href="/wallet"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-primary]"
+            title={t("wallet")}
+          >
+            <Wallet className="h-4 w-4" />
+          </Link>
           <Link
             href="/settings/prompts"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-primary]"

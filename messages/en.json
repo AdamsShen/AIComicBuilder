@@ -21,6 +21,7 @@
     "upload": "Upload",
     "pricing": "Pricing",
     "signIn": "Sign In",
+    "wallet": "Wallet",
     "uploadFailed": "Upload failed. Please try again."
   },
   "dashboard": {
@@ -612,6 +613,27 @@
     "haveAccount": "Already have an account?",
     "billing": "Billing",
     "cancelPlan": "Cancel plan",
-    "manageSubscription": "Manage Subscription"
+    "manageSubscription": "Manage Subscription",
+    "wallet": "Wallet"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "balance": "Balance",
+    "topUp": "Top Up",
+    "recharge": "Recharge",
+    "amount": "Amount",
+    "customAmount": "Custom amount",
+    "selectAmount": "Select amount",
+    "selectPayment": "Payment method",
+    "paymentStripe": "Credit Card (Stripe)",
+    "paymentAlipay": "Alipay",
+    "rechargeSuccess": "Top-up successful",
+    "rechargeFailed": "Top-up failed",
+    "transactionHistory": "Transaction history",
+    "noTransactions": "No transactions yet",
+    "rechargeRecord": "{provider} top-up",
+    "spendRecord": "Service usage",
+    "pendingRecharge": "Processing...",
+    "loadMore": "Load more"
   }
 }

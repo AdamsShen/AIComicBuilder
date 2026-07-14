@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { SignInDialog } from "./sign-in-dialog";
 import { useTranslations } from "next-intl";
-import { User, LogOut, CreditCard, RefreshCw, Loader2 } from "lucide-react";
+import { User, LogOut, CreditCard, RefreshCw, Loader2, Wallet as WalletIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface PlanState {
@@ -134,6 +134,13 @@ export function UserMenu() {
                 {t("cancelPlan")}
               </button>
             ) : null}
+            <button
+              onClick={() => router.push("/wallet")}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-[--text-secondary] hover:bg-[--surface] hover:text-[--text-primary] transition-colors"
+            >
+              <WalletIcon className="h-3.5 w-3.5" />
+              {t("wallet")}
+            </button>
             <button
               onClick={async () => {
                 await signOut();

@@ -21,7 +21,8 @@
     "upload": "업로드",
     "uploadFailed": "업로드에 실패했습니다. 다시 시도해 주세요.",
     "pricing": "요금제",
-    "signIn": "로그인"
+    "signIn": "로그인",
+    "wallet": "지갑"
   },
   "dashboard": {
     "title": "내 프로젝트",
@@ -612,6 +613,27 @@
     "haveAccount": "이미 계정이 있으신가요?",
     "billing": "결제 관리",
     "cancelPlan": "구독 취소",
-    "manageSubscription": "구독 관리"
+    "manageSubscription": "구독 관리",
+    "wallet": "지갑"
+  },
+  "wallet": {
+    "title": "지갑",
+    "balance": "잔액",
+    "topUp": "충전",
+    "recharge": "충전",
+    "amount": "금액",
+    "customAmount": "직접 입력",
+    "selectAmount": "금액 선택",
+    "selectPayment": "결제 수단",
+    "paymentStripe": "신용카드 (Stripe)",
+    "paymentAlipay": "Alipay",
+    "rechargeSuccess": "충전 완료",
+    "rechargeFailed": "충전 실패",
+    "transactionHistory": "거래 내역",
+    "noTransactions": "거래 내역이 없습니다",
+    "rechargeRecord": "{provider} 충전",
+    "spendRecord": "서비스 이용",
+    "pendingRecharge": "처리 중...",
+    "loadMore": "더 보기"
   }
 }

@@ -3,6 +3,8 @@ import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { creditWalletRecharge } from "@/lib/wallet";
+import { getUsdToCnyRate } from "@/lib/wallet-plans";
 import Stripe from "stripe";
 
 export async function POST(request: Request) {
@@ -117,6 +119,31 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         })
         .where(eq(subscriptions.stripeSubscriptionId, obj.id as string));
+      break;
+    }
+
+    case "checkout.session.completed": {
+      const metadata = obj.metadata ?? {};
+      if (metadata?.type !== "wallet_recharge") break;
+
+      const userId = metadata.userId as string | undefined;
+      const outTradeNo = metadata.outTradeNo as string | undefined;
+      const usdAmount = obj.amount_total as number | undefined;
+
+      if (!userId || !outTradeNo || !usdAmount) {
+        console.error("[Stripe Webhook] Missing wallet recharge metadata");
+        break;
+      }
+
+      // Stripe 收美元，按汇率转为人民币分入账
+      const cnyAmount = Math.round(usdAmount * getUsdToCnyRate());
+
+      await creditWalletRecharge({
+        outTradeNo,
+        userId,
+        amount: cnyAmount,
+        providerSessionId: obj.id as string,
+      });
       break;
     }
   }

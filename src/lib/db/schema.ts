@@ -595,3 +595,64 @@ export const userModelConfig = sqliteTable("user_model_config", {
     .notNull()
     .$defaultFn(() => new Date()),
 });
+
+// ============================================================
+// Wallet tables (account-level balance + recharge + ledger)
+// ============================================================
+
+export const walletBalance = sqliteTable("wallet_balance", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  balance: integer("balance").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const walletRecharges = sqliteTable("wallet_recharges", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  outTradeNo: text("out_trade_no").notNull().unique(),
+  provider: text("provider", { enum: ["stripe", "alipay"] }).notNull(),
+  providerSessionId: text("provider_session_id"),
+  amount: integer("amount").notNull(),
+  status: text("status", {
+    enum: ["pending", "paid", "failed", "expired"],
+  })
+    .notNull()
+    .default("pending"),
+  paidAt: integer("paid_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const walletRecords = sqliteTable("wallet_records", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  type: text("type", {
+    enum: ["recharge", "spend", "refund", "adjustment"],
+  }).notNull(),
+  amount: integer("amount").notNull(),
+  balanceBefore: integer("balance_before").notNull(),
+  balanceAfter: integer("balance_after").notNull(),
+  description: text("description").notNull().default(""),
+  referenceId: text("reference_id"),
+  referenceType: text("reference_type", {
+    enum: ["recharge", "task", "manual"],
+  }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});

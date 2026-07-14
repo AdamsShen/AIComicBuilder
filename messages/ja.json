@@ -21,7 +21,8 @@
     "upload": "アップロード",
     "uploadFailed": "アップロードに失敗しました。もう一度お試しください。",
     "pricing": "料金",
-    "signIn": "ログイン"
+    "signIn": "ログイン",
+    "wallet": "ウォレット"
   },
   "dashboard": {
     "title": "マイプロジェクト",
@@ -612,6 +613,27 @@
     "haveAccount": "すでにアカウントをお持ちの方",
     "billing": "請求管理",
     "cancelPlan": "プランを解約",
-    "manageSubscription": "サブスクリプション管理"
+    "manageSubscription": "サブスクリプション管理",
+    "wallet": "ウォレット"
+  },
+  "wallet": {
+    "title": "ウォレット",
+    "balance": "残高",
+    "topUp": "チャージ",
+    "recharge": "チャージ",
+    "amount": "金額",
+    "customAmount": "カスタム金額",
+    "selectAmount": "金額を選択",
+    "selectPayment": "支払い方法",
+    "paymentStripe": "クレジットカード (Stripe)",
+    "paymentAlipay": "Alipay",
+    "rechargeSuccess": "チャージ完了",
+    "rechargeFailed": "チャージ失敗",
+    "transactionHistory": "取引履歴",
+    "noTransactions": "取引履歴がありません",
+    "rechargeRecord": "{provider} チャージ",
+    "spendRecord": "サービス利用",
+    "pendingRecharge": "処理中...",
+    "loadMore": "もっと読み込む"
   }
 }

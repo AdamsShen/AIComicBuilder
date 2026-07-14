@@ -21,7 +21,8 @@
     "upload": "上传",
     "uploadFailed": "上传失败，请重试",
     "pricing": "定价",
-    "signIn": "登录"
+    "signIn": "登录",
+    "wallet": "钱包"
   },
   "dashboard": {
     "title": "我的项目",
@@ -613,6 +614,27 @@
     "haveAccount": "已有账户？",
     "billing": "账单管理",
     "cancelPlan": "取消订阅",
-    "manageSubscription": "管理订阅"
+    "manageSubscription": "管理订阅",
+    "wallet": "钱包"
+  },
+  "wallet": {
+    "title": "钱包",
+    "balance": "余额",
+    "topUp": "充值",
+    "recharge": "充值",
+    "amount": "金额",
+    "customAmount": "自定义金额",
+    "selectAmount": "选择充值金额",
+    "selectPayment": "选择支付方式",
+    "paymentStripe": "信用卡 (Stripe)",
+    "paymentAlipay": "支付宝",
+    "rechargeSuccess": "充值成功",
+    "rechargeFailed": "充值失败",
+    "transactionHistory": "交易记录",
+    "noTransactions": "暂无交易记录",
+    "rechargeRecord": "{provider} 充值",
+    "spendRecord": "服务消费",
+    "pendingRecharge": "处理中...",
+    "loadMore": "加载更多"
   }
 }

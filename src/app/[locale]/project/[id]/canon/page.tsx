@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, use } from "react";
 import { useLocale } from "next-intl";
 import { ArrowLeft, Loader2, Trash2, Plus, Sparkles, BookMarked } from "lucide-react";
 import { apiFetch } from "@/lib/api-fetch";
+import { isRechargeError } from "@/lib/handle-ai-error";
 import { useModelStore } from "@/stores/model-store";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -97,7 +98,7 @@ export default function CanonPage({
         body: JSON.stringify({ content: fact.content.trim() }),
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err), isRechargeError(err) ? { action: { label: "去充值", onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
       await fetchData();
     }
   }
@@ -107,7 +108,7 @@ export default function CanonPage({
     try {
       await apiFetch(`/api/projects/${projectId}/canon/${id}`, { method: "DELETE" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err), isRechargeError(err) ? { action: { label: "去充值", onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
       await fetchData();
     }
   }
@@ -127,7 +128,7 @@ export default function CanonPage({
       setNewContent("");
       await fetchData();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err), isRechargeError(err) ? { action: { label: "去充值", onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     } finally {
       setAdding(false);
     }
@@ -156,7 +157,7 @@ export default function CanonPage({
         toast.error(data.error);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err), isRechargeError(err) ? { action: { label: "去充值", onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     } finally {
       setExtracting((prev) => ({ ...prev, [episodeId]: false }));
     }

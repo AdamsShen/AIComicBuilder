@@ -38,6 +38,7 @@ import {
 import { InlineModelPicker } from "@/components/editor/model-selector";
 import { VideoRatioPicker } from "@/components/editor/video-ratio-picker";
 import { apiFetch } from "@/lib/api-fetch";
+import { isRechargeError } from "@/lib/handle-ai-error";
 import { toast } from "sonner";
 import { GenerationModeTab } from "@/components/editor/generation-mode-tab";
 import { ShotDrawer } from "@/components/editor/shot-drawer";
@@ -218,7 +219,7 @@ export default function EpisodeStoryboardPage() {
       }
     } catch (err) {
       console.error("Shot split error:", err);
-      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"), isRechargeError(err) ? { action: { label: t("common.recharge"), onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     }
 
     setGenerating(false);
@@ -261,7 +262,7 @@ export default function EpisodeStoryboardPage() {
       }
     } catch (err) {
       console.error("Batch frame generate error:", err);
-      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"), isRechargeError(err) ? { action: { label: t("common.recharge"), onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     }
 
     setGeneratingFramesOverwrite(false);
@@ -305,7 +306,7 @@ export default function EpisodeStoryboardPage() {
       }
     } catch (err) {
       console.error("Batch video generate error:", err);
-      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"), isRechargeError(err) ? { action: { label: t("common.recharge"), onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     }
 
     setGeneratingVideosOverwrite(false);
@@ -349,7 +350,7 @@ export default function EpisodeStoryboardPage() {
       }
     } catch (err) {
       console.error("Batch scene frame error:", err);
-      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"), isRechargeError(err) ? { action: { label: t("common.recharge"), onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     }
 
     setSceneFramesOverwrite(false);
@@ -489,7 +490,7 @@ export default function EpisodeStoryboardPage() {
       }
     } catch (err) {
       console.error("Batch video prompt error:", err);
-      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"), isRechargeError(err) ? { action: { label: t("common.recharge"), onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     }
 
     setGeneratingVideoPrompts(false);
@@ -532,7 +533,7 @@ export default function EpisodeStoryboardPage() {
       }
     } catch (err) {
       console.error("Batch reference video error:", err);
-      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"), isRechargeError(err) ? { action: { label: t("common.recharge"), onClick: () => { window.location.href = `/${locale}/wallet`; } }, duration: 8000 } : undefined);
     }
 
     setGeneratingVideosOverwrite(false);

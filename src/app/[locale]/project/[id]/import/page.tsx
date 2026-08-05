@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api-fetch";
+import { handleAIError } from "@/lib/handle-ai-error";
 import { useModelStore } from "@/stores/model-store";
 import { useModelGuard } from "@/hooks/use-model-guard";
 import { toast } from "sonner";
@@ -179,6 +180,12 @@ export default function ImportPage({
       });
       if (!res.ok) {
         const errData = await res.json();
+        if (res.status === 402) {
+          toast.error(errData.error || t("insufficientBalance"), {
+            action: { label: tc("recharge"), onClick: () => router.push(`/${locale}/wallet`) },
+            duration: 8000,
+          });
+        }
         throw new Error(errData.error || `HTTP ${res.status}`);
       }
       const data = await res.json();
@@ -187,7 +194,7 @@ export default function ImportPage({
       addLog(1, "done", `解析完成，共 ${data.charCount} 字（耗时 ${formatElapsed(step1Start)}）`);
       setStepStatus((prev) => ({ ...prev, 1: "done" }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Parse failed";
+      const msg = err instanceof Error ? handleAIError(err, `/${locale}/wallet`) : "Parse failed";
       addLog(1, "error", `文件解析失败: ${msg}（耗时 ${formatElapsed(step1Start)}）`);
       setStepStatus((prev) => ({ ...prev, 1: "error" }));
       return;
@@ -217,7 +224,7 @@ export default function ImportPage({
       addLog(2, "done", `提取完成: ${mainCount} 个主角, ${guestCount} 个配角（耗时 ${formatElapsed(step2Start)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "done" }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Extract failed";
+      const msg = err instanceof Error ? handleAIError(err, `/${locale}/wallet`) : "Extract failed";
       addLog(2, "error", `角色提取失败: ${msg}（耗时 ${formatElapsed(step2Start)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "error" }));
       return;
@@ -251,7 +258,7 @@ export default function ImportPage({
       addLog(2, "done", `提取完成: ${mainCount} 个主角, ${guestCount} 个配角（耗时 ${formatElapsed(retryStart)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "done" }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Extract failed";
+      const msg = err instanceof Error ? handleAIError(err, `/${locale}/wallet`) : "Extract failed";
       addLog(2, "error", `角色提取失败: ${msg}（耗时 ${formatElapsed(retryStart)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "error" }));
     }
@@ -284,7 +291,7 @@ export default function ImportPage({
       addLog(3, "done", `分集完成，共 ${data.episodes.length} 集`);
       setStepStatus((prev) => ({ ...prev, 3: "done" }));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Split failed";
+      const msg = err instanceof Error ? handleAIError(err, `/${locale}/wallet`) : "Split failed";
       addLog(3, "error", `分集失败: ${msg}`);
       setStepStatus((prev) => ({ ...prev, 3: "error" }));
     }

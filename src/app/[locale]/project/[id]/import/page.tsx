@@ -17,6 +17,18 @@ import { toast } from "sonner";
 const ACCEPTED = ".txt,.docx,.pdf,.md,.markdown";
 const MAX_SIZE = 20 * 1024 * 1024;
 
+// 日志 id 生成：时间戳 + 单调递增计数，避免同一毫秒内多条日志 key 冲突
+let logSeq = 0;
+function nextLogId() {
+  return `${Date.now()}-${logSeq++}`;
+}
+
+// 执行耗时格式化：<1s 显示 ms，否则显示带一位小数的秒
+function formatElapsed(start: number) {
+  const ms = Date.now() - start;
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+}
+
 interface ExtractedCharacter {
   name: string;
   frequency: number;
@@ -128,7 +140,7 @@ export default function ImportPage({
   const addLog = useCallback((step: Step, status: LogEntry["status"], message: string) => {
     setLogs((prev) => [
       ...prev,
-      { id: Date.now().toString(), step, status, message, createdAt: Date.now() },
+      { id: nextLogId(), step, status, message, createdAt: Date.now() },
     ]);
   }, []);
 
@@ -155,6 +167,7 @@ export default function ImportPage({
     setCurrentStep(1);
     setStepStatus((prev) => ({ ...prev, 1: "running" }));
     addLog(1, "running", `解析文件: ${file.name}`);
+    const step1Start = Date.now();
 
     let text: string;
     try {
@@ -171,11 +184,11 @@ export default function ImportPage({
       const data = await res.json();
       text = data.text;
       setFullText(text);
-      addLog(1, "done", `解析完成，共 ${data.charCount} 字`);
+      addLog(1, "done", `解析完成，共 ${data.charCount} 字（耗时 ${formatElapsed(step1Start)}）`);
       setStepStatus((prev) => ({ ...prev, 1: "done" }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Parse failed";
-      addLog(1, "error", `文件解析失败: ${msg}`);
+      addLog(1, "error", `文件解析失败: ${msg}（耗时 ${formatElapsed(step1Start)}）`);
       setStepStatus((prev) => ({ ...prev, 1: "error" }));
       return;
     }
@@ -184,6 +197,7 @@ export default function ImportPage({
     setCurrentStep(2);
     setStepStatus((prev) => ({ ...prev, 2: "running" }));
     addLog(2, "running", "开始角色提取...");
+    const step2Start = Date.now();
 
     try {
       const res = await apiFetch(`/api/projects/${projectId}/import/characters`, {
@@ -200,11 +214,11 @@ export default function ImportPage({
       setRelationships(data.relationships || []);
       const mainCount = data.characters.filter((c: ExtractedCharacter) => c.scope === "main").length;
       const guestCount = data.characters.length - mainCount;
-      addLog(2, "done", `提取完成: ${mainCount} 个主角, ${guestCount} 个配角`);
+      addLog(2, "done", `提取完成: ${mainCount} 个主角, ${guestCount} 个配角（耗时 ${formatElapsed(step2Start)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "done" }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Extract failed";
-      addLog(2, "error", `角色提取失败: ${msg}`);
+      addLog(2, "error", `角色提取失败: ${msg}（耗时 ${formatElapsed(step2Start)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "error" }));
       return;
     }
@@ -217,6 +231,7 @@ export default function ImportPage({
 
     setStepStatus((prev) => ({ ...prev, 2: "running" }));
     addLog(2, "running", "重试角色提取...");
+    const retryStart = Date.now();
 
     try {
       const res = await apiFetch(`/api/projects/${projectId}/import/characters`, {
@@ -233,11 +248,11 @@ export default function ImportPage({
       setRelationships(data.relationships || []);
       const mainCount = data.characters.filter((c: ExtractedCharacter) => c.scope === "main").length;
       const guestCount = data.characters.length - mainCount;
-      addLog(2, "done", `提取完成: ${mainCount} 个主角, ${guestCount} 个配角`);
+      addLog(2, "done", `提取完成: ${mainCount} 个主角, ${guestCount} 个配角（耗时 ${formatElapsed(retryStart)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "done" }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Extract failed";
-      addLog(2, "error", `角色提取失败: ${msg}`);
+      addLog(2, "error", `角色提取失败: ${msg}（耗时 ${formatElapsed(retryStart)}）`);
       setStepStatus((prev) => ({ ...prev, 2: "error" }));
     }
   }

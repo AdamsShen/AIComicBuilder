@@ -9,6 +9,8 @@ import { getUserIdFromRequest } from "@/lib/get-user-id";
 import { addImportLog, chunkText, mapWithConcurrency, CHUNK_CONCURRENCY } from "@/lib/import-utils";
 import { buildImportCharacterExtractPrompt } from "@/lib/ai/prompts/import-character-extract";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
+import { canUseAI } from "@/lib/entitlement";
+import { chargeForAIUse } from "@/lib/ai-pricing";
 
 export const maxDuration = 300;
 
@@ -34,6 +36,9 @@ export async function POST(
 ) {
   const { id: projectId } = await params;
   const userId = await getUserIdFromRequest(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const [project] = await db
     .select()
@@ -52,6 +57,15 @@ export async function POST(
 
   if (!body.modelConfig?.text) {
     return NextResponse.json({ error: "No text model" }, { status: 400 });
+  }
+
+  // 试用到期 + 余额不足 → 禁止使用 AI
+  const canUse = await canUseAI(userId);
+  if (!canUse) {
+    return NextResponse.json(
+      { error: "试用已到期且余额不足，请先充值" },
+      { status: 402 }
+    );
   }
 
   const chunks = chunkText(body.text);
@@ -85,6 +99,8 @@ export async function POST(
 
         try {
           const parsed = JSON.parse(extractJSON(result.text));
+          // 扣费（试用期内跳过，LLM 调用成功后执行）
+          await chargeForAIUse(userId, "character_extract", projectId);
           // Support both { characters, relationships } and legacy array format
           if (Array.isArray(parsed)) return { chars: parsed as ExtractedChar[], rels: [] as ExtractedRelation[] };
           return { chars: (parsed.characters || []) as ExtractedChar[], rels: (parsed.relationships || []) as ExtractedRelation[] };
@@ -101,6 +117,8 @@ export async function POST(
             providerOptions: jsonMode,
           });
           const parsed = JSON.parse(extractJSON(retry.text));
+          // 扣费（重试成功后执行）
+          await chargeForAIUse(userId, "character_extract", projectId);
           if (Array.isArray(parsed)) return { chars: parsed as ExtractedChar[], rels: [] as ExtractedRelation[] };
           return { chars: (parsed.characters || []) as ExtractedChar[], rels: (parsed.relationships || []) as ExtractedRelation[] };
         }

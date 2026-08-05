@@ -9,6 +9,8 @@ import { getUserIdFromRequest } from "@/lib/get-user-id";
 import { id as genId } from "@/lib/id";
 import { buildScriptSplitPrompt } from "@/lib/ai/prompts/script-split";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
+import { canUseAI } from "@/lib/entitlement";
+import { chargeForAIUse } from "@/lib/ai-pricing";
 
 export const maxDuration = 300;
 
@@ -89,6 +91,9 @@ export async function POST(
 ) {
   const { id: projectId } = await params;
   const userId = await getUserIdFromRequest(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   // Verify project ownership
   const [project] = await db
@@ -127,6 +132,15 @@ export async function POST(
     return NextResponse.json(
       { error: "No text model configured" },
       { status: 400 }
+    );
+  }
+
+  // 试用到期 + 余额不足 → 禁止使用 AI
+  const canUse = await canUseAI(userId);
+  if (!canUse) {
+    return NextResponse.json(
+      { error: "试用已到期且余额不足，请先充值" },
+      { status: 402 }
     );
   }
 
@@ -169,6 +183,8 @@ export async function POST(
     });
 
     const parsed = JSON.parse(extractJSON(result.text)) as EpisodeResult[];
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId, "script_parse", projectId);
     return parsed;
   });
 

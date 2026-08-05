@@ -32,6 +32,9 @@ async function callAndValidateAgent(
 }
 import { eq, asc, and, lt, gt, desc, or, isNull, inArray } from "drizzle-orm";
 import { getUserIdFromRequest } from "@/lib/get-user-id";
+import { canUseAI } from "@/lib/entitlement";
+import { chargeForAIUse } from "@/lib/ai-pricing";
+import type { AIOperationType } from "@/lib/ai-pricing";
 import path from "path";
 import { id as genId } from "@/lib/id";
 import { enqueueTask } from "@/lib/task-queue";
@@ -63,6 +66,19 @@ import {
 } from "@/lib/shot-asset-utils";
 import { buildRefImagePromptsRequest } from "@/lib/ai/prompts/ref-image-prompts";
 import { buildKeyframePromptsRequest } from "@/lib/ai/prompts/keyframe-prompts";
+
+/** 需要扣费的 action 集合（模块级常量，避免每次请求重建） */
+const CHARGEABLE_ACTIONS = new Set([
+  "script_outline", "script_generate", "script_parse", "character_extract",
+  "single_character_image", "batch_character_image", "shot_split",
+  "single_shot_rewrite", "batch_frame_generate", "single_frame_generate",
+  "single_video_generate", "batch_video_generate", "single_scene_frame",
+  "batch_scene_frame", "single_reference_video", "batch_reference_video",
+  "single_video_prompt", "batch_video_prompt", "ai_optimize_text",
+  "generate_world_setting", "batch_ref_image_generate", "single_ref_image_generate",
+  "generate_ref_prompts", "single_ref_image_generate_all", "generate_keyframe_prompts",
+  "episode_summary", "extract_canon",
+]);
 
 export const maxDuration = 300;
 
@@ -178,6 +194,9 @@ export async function POST(
 ) {
   const { id: projectId } = await params;
   const userId = await getUserIdFromRequest(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   // Verify project ownership
   const [ownerCheck] = await db
@@ -200,6 +219,17 @@ export async function POST(
   // locale 优先从 body 取值（显式传参），fallback 到 x-user-locale header（apiFetch 自动携带）
   const locale = bodyLocale || request.headers.get("x-user-locale") || undefined;
   console.log(`[Generate] action=${action}, projectId=${projectId}, episodeId=${episodeId || "none"}, locale=${locale || "none"}`);
+
+  // 收费操作预检：试用到期 + 余额为 0 → 402
+  if (CHARGEABLE_ACTIONS.has(action)) {
+    const canUse = await canUseAI(userId);
+    if (!canUse) {
+      return NextResponse.json(
+        { error: "试用已到期且余额不足，请先充值" },
+        { status: 402 }
+      );
+    }
+  }
 
   if (action === "script_outline") {
     return handleScriptOutlineAction(projectId, userId, payload, modelConfig, episodeId, locale);
@@ -226,11 +256,11 @@ export async function POST(
   }
 
   if (action === "single_character_image") {
-    return handleSingleCharacterImage(payload, modelConfig, locale);
+    return handleSingleCharacterImage(projectId, userId, payload, modelConfig, locale);
   }
 
   if (action === "batch_character_image") {
-    return handleBatchCharacterImage(projectId, modelConfig, episodeId, locale);
+    return handleBatchCharacterImage(projectId, userId, modelConfig, episodeId, locale);
   }
 
   if (action === "shot_split") {
@@ -242,7 +272,7 @@ export async function POST(
   }
 
   if (action === "single_shot_rewrite") {
-    return handleSingleShotRewrite(projectId, payload, modelConfig, episodeId, locale);
+    return handleSingleShotRewrite(projectId, userId, payload, modelConfig, episodeId, locale);
   }
 
   if (action === "batch_frame_generate") {
@@ -346,6 +376,8 @@ async function handleScriptOutlineAction(
   const boundAgent = await findBoundAgent(projectId, "script_outline");
   if (boundAgent) {
     try {
+      // 扣费（试用期内跳过）
+      await chargeForAIUse(userId, "script_outline", projectId);
       const agentStream = await callAgentStream(
         { platform: boundAgent.platform as "bailian" | "dify" | "coze", appId: boundAgent.appId, apiKey: boundAgent.apiKey },
         memoryContext + `创意构想：${idea}`,
@@ -390,6 +422,9 @@ async function handleScriptOutlineAction(
       { status: 400 }
     );
   }
+
+  // 扣费（试用期内跳过）
+  await chargeForAIUse(userId, "script_outline", projectId);
 
   const model = createLanguageModel(modelConfig.text);
   const outlineSystem = await resolvePrompt("script_outline", { userId, projectId, locale });
@@ -536,6 +571,8 @@ async function handleEpisodeSummary(
       .update(episodes)
       .set({ summary, updatedAt: new Date() })
       .where(eq(episodes.id, episodeId));
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId || "", "episode_summary", projectId);
     return NextResponse.json({ summary });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -595,6 +632,8 @@ async function handleExtractCanon(
     ? await resolvePrompt("canon_extract", { userId, locale })
     : undefined;
   const added = await extractCanonFacts(projectId, episodeId, script, modelConfig.text, canonSystem);
+  // 扣费（试用期内跳过，LLM 调用成功后执行）
+  await chargeForAIUse(userId || "", "extract_canon", projectId);
   return NextResponse.json({ added });
 }
 
@@ -631,6 +670,8 @@ async function handleScriptGenerate(
   const sgBoundAgent = await findBoundAgent(projectId, "script_generate");
   if (sgBoundAgent) {
     try {
+      // 扣费（试用期内跳过）
+      await chargeForAIUse(userId, "script_generate", projectId);
       const outline = (payload?.outline as string) || "";
       const agentPrompt =
         memoryContext +
@@ -701,6 +742,9 @@ async function handleScriptGenerate(
     ? `\n\n【故事大纲 - 请严格按照以下大纲结构展开剧本】\n${outline}\n\n`
     : "";
 
+  // 扣费（试用期内跳过）
+  await chargeForAIUse(userId, "script_generate", projectId);
+
   const model = createLanguageModel(modelConfig.text);
   const scriptGenerateSystem = await resolvePrompt("script_generate", { userId, projectId, locale });
 
@@ -767,6 +811,8 @@ async function handleScriptParseStream(
   const boundAgent = await findBoundAgent(projectId, "script_parse");
   if (boundAgent) {
     try {
+      // 扣费（试用期内跳过）
+      await chargeForAIUse(userId, "script_parse", projectId);
       const agentStream = await callAgentStream(
         { platform: boundAgent.platform as "bailian" | "dify" | "coze", appId: boundAgent.appId, apiKey: boundAgent.apiKey },
         script,
@@ -803,6 +849,9 @@ async function handleScriptParseStream(
       { status: 400 }
     );
   }
+
+  // 扣费（试用期内跳过）
+  await chargeForAIUse(userId, "script_parse", projectId);
 
   const model = createLanguageModel(modelConfig.text);
   const scriptParseSystem = await resolvePrompt("script_parse", { userId, projectId, locale });
@@ -902,6 +951,9 @@ async function handleCharacterExtract(
   }
 
   const parsed = JSON.parse(extractJSON(aiText));
+
+  // 扣费（试用期内跳过，LLM 调用成功后执行）
+  await chargeForAIUse(userId, "character_extract", projectId);
 
   // Support both formats: new { characters, relationships } and legacy array
   const extracted: Array<{
@@ -1036,6 +1088,8 @@ async function handleCharacterExtract(
 // --- single_character_image: generate turnaround image for one character ---
 
 async function handleSingleCharacterImage(
+  projectId: string,
+  userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
   locale?: string
@@ -1080,6 +1134,9 @@ async function handleSingleCharacterImage(
       history.push(imagePath);
     }
 
+    // 扣费（试用期内跳过，图片生成成功后执行）
+    await chargeForAIUse(userId, "character_image", characterId);
+
     await db
       .update(characters)
       .set({ referenceImage: imagePath, referenceImageHistory: JSON.stringify(history) })
@@ -1119,6 +1176,7 @@ async function handleSingleCharacterImage(
 
 async function handleBatchCharacterImage(
   projectId: string,
+  userId: string,
   modelConfig?: ModelConfig,
   episodeId?: string,
   locale?: string
@@ -1170,6 +1228,8 @@ async function handleBatchCharacterImage(
           .update(characters)
           .set({ referenceImage: imagePath, referenceImageHistory: JSON.stringify(history) })
           .where(eq(characters.id, character.id));
+        // 扣费（试用期内跳过，图片生成成功后执行）
+        await chargeForAIUse(userId, "character_image", character.id);
         return { characterId: character.id, name: character.name, imagePath, status: "ok" };
       } catch (err) {
         console.error(`[BatchCharacterImage] Error for ${character.name}:`, err);
@@ -1229,6 +1289,9 @@ async function handleShotSplitStream(
       }
       const agentResult = await callAndValidateAgent(boundAgent, "shot_split", script);
       if (agentResult instanceof NextResponse) return agentResult;
+
+      // 扣费（试用期内跳过，LLM 调用成功后执行）
+      await chargeForAIUse(userId, "shot_split", projectId);
 
       // Parse agent output and save to DB (same logic as built-in pipeline)
       const agentParsed = JSON.parse(extractJSON(agentResult.text));
@@ -1364,6 +1427,9 @@ async function handleShotSplitStream(
 
   // Fetch world setting and target duration from project
   const [projData] = await db.select({ worldSetting: projects.worldSetting, targetDuration: projects.targetDuration }).from(projects).where(eq(projects.id, projectId));
+
+  // 扣费（试用期内跳过）
+  await chargeForAIUse(userId, "shot_split", projectId);
   let targetDuration = projData?.targetDuration || 0;
   if (episodeId) {
     const [epDur] = await db.select({ targetDuration: episodes.targetDuration }).from(episodes).where(eq(episodes.id, episodeId));
@@ -1586,6 +1652,7 @@ function splitScriptByScenes(script: string, maxScenes: number): string[] {
 
 async function handleSingleShotRewrite(
   projectId: string,
+  userId: string,
   payload?: Record<string, unknown>,
   modelConfig?: ModelConfig,
   episodeId?: string,
@@ -1691,6 +1758,8 @@ IMPORTANT: Keep the same scene, characters, and narrative intent. Only rephrase 
       }
     }
 
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId, "shot_rewrite", shotId);
     return NextResponse.json({ shotId, status: "ok", ...parsed });
   } catch (err) {
     console.error(`[SingleShotRewrite] Error for shot ${shotId}:`, err);
@@ -1870,6 +1939,9 @@ async function handleBatchFrameGenerate(
         doneCount++;
         console.log(`[BatchFrameGenerate] ✓ shot ${shot.sequence} (${doneCount}/${total}) ${elapsed}s`);
 
+        // 扣费（试用期内跳过，画面生成成功后执行）
+        await chargeForAIUse(userId, "frame_generate", shot.id);
+
         return {
           shotId: shot.id,
           sequence: shot.sequence,
@@ -2016,6 +2088,8 @@ async function handleSingleFrameGenerate(
         status: "completed",
       });
 
+    // 扣费（试用期内跳过，画面生成成功后执行）
+    await chargeForAIUse(userId, "frame_generate", shotId);
     return NextResponse.json({ shotId, firstFrame: firstFramePath, lastFrame: lastFramePath, status: "ok" });
   } catch (err) {
     console.error(`[SingleFrameGenerate] Error for shot ${shotId}:`, err);
@@ -2126,6 +2200,8 @@ async function handleSingleVideoGenerate(
       .set({ status: "completed" })
       .where(eq(shots.id, shotId));
 
+    // 扣费（试用期内跳过，视频生成成功后执行）
+    await chargeForAIUse(userId, "video_generate", shotId);
     return NextResponse.json({ shotId, videoUrl: result.filePath, status: "ok" });
   } catch (err) {
     console.error(`[SingleVideoGenerate] Error for shot ${shotId}:`, err);
@@ -2248,6 +2324,8 @@ async function handleBatchVideoGenerate(
           .where(eq(shots.id, shot.id));
 
         console.log(`[BatchVideoGenerate] Shot ${shot.sequence} completed`);
+        // 扣费（试用期内跳过，视频生成成功后执行）
+        await chargeForAIUse(userId, "video_generate", shot.id);
         return { shotId: shot.id, sequence: shot.sequence, status: "ok", videoUrl: result.filePath };
       } catch (err) {
         console.error(`[BatchVideoGenerate] Error for shot ${shot.sequence}:`, err);
@@ -2331,6 +2409,8 @@ async function handleSingleSceneFrame(
       .set({ status: "pending" })
       .where(eq(shots.id, shotId));
 
+    // 扣费（试用期内跳过，场景图生成成功后执行）
+    await chargeForAIUse(userId, "scene_frame", shotId);
     return NextResponse.json({ shotId, sceneRefFrame: sceneFramePath, status: "ok" });
   } catch (err) {
     console.error(`[SingleSceneFrame] Error for shot ${shot.sequence}:`, err);
@@ -2418,6 +2498,8 @@ async function handleBatchSceneFrame(
               characters: entry.characters ?? undefined,
             });
             console.log(`[BatchRefImage] Shot ${shot.sequence}: ref "${entry.id}" done`);
+            // 扣费（试用期内跳过，场景图生成成功后执行）
+            await chargeForAIUse(userId, "scene_frame", shot.id);
             return true;
           } catch (err) {
             console.warn(`[BatchRefImage] Shot ${shot.sequence} ref ${entry.id} failed:`, err);
@@ -2634,6 +2716,8 @@ async function handleSingleReferenceVideo(
       .set({ status: "completed" })
       .where(eq(shots.id, shotId));
 
+    // 扣费（试用期内跳过，视频生成成功后执行）
+    await chargeForAIUse(userId, "video_generate", shotId);
     return NextResponse.json({ shotId, referenceVideoUrl: result.filePath, status: "ok" });
   } catch (err) {
     console.error(`[SingleReferenceVideo] Error for shot ${shot.sequence}:`, err);
@@ -2846,6 +2930,8 @@ async function handleBatchReferenceVideo(
           .where(eq(shots.id, shot.id));
 
         console.log(`[BatchReferenceVideo] Shot ${shot.sequence} completed`);
+        // 扣费（试用期内跳过，视频生成成功后执行）
+        await chargeForAIUse(userId, "video_generate", shot.id);
         return { shotId: shot.id, sequence: shot.sequence, status: "ok", referenceVideoUrl: result.filePath };
       } catch (err) {
         console.error(`[BatchReferenceVideo] Error for shot ${shot.sequence}:`, err);
@@ -3115,6 +3201,8 @@ async function handleSingleVideoPrompt(
     const videoPrompt = `Duration: ${effectiveDuration}s.\n\n${rawPrompt.trim()}`;
     console.log(`[SingleVideoPrompt] Shot ${shot.sequence} videoPrompt:\n${videoPrompt}`);
     await db.update(shots).set({ videoPrompt }).where(eq(shots.id, shotId));
+    // 扣费（试用期内跳过，视频提示词生成成功后执行）
+    await chargeForAIUse(userId, "video_prompt", shotId);
     return NextResponse.json({ shotId, videoPrompt, status: "ok" });
   } catch (err) {
     console.error("[SingleVideoPrompt] Error:", err);
@@ -3164,6 +3252,9 @@ async function handleBatchVideoPrompt(
 
     const agentResult = await callAndValidateAgent(vpBoundAgent, "video_prompts", vpPrompt);
     if (agentResult instanceof NextResponse) return agentResult;
+
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId, "video_prompt", projectId);
 
     // Parse agent output and save videoPrompt to each shot
     try {
@@ -3305,6 +3396,8 @@ async function handleBatchVideoPrompt(
         const videoPrompt = `Duration: ${effectiveDuration}s.\n\n${rawPrompt.trim()}`;
         await db.update(shots).set({ videoPrompt }).where(eq(shots.id, shot.id));
         console.log(`[BatchVideoPrompt] Shot ${shot.sequence} done (${((Date.now() - shotStart) / 1000).toFixed(1)}s, ${visionFrames.length} frames)`);
+        // 扣费（试用期内跳过，视频提示词生成成功后执行）
+        await chargeForAIUse(userId, "video_prompt", shot.id);
         return { shotId: shot.id, status: "ok" };
       } catch (err) {
         console.error(`[BatchVideoPrompt] Shot ${shot.sequence} failed:`, err);
@@ -3379,6 +3472,8 @@ async function handleAiOptimizeText(
         temperature: 0.7,
       }
     );
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId || "", "ai_optimize_text", projectId);
     return NextResponse.json({ optimizedText: result.trim() });
   }
 
@@ -3395,6 +3490,8 @@ ${instruction}
 请输出优化后的文本：`,
   });
 
+  // 扣费（试用期内跳过，LLM 调用成功后执行）
+  await chargeForAIUse(userId || "", "ai_optimize_text", projectId);
   return NextResponse.json({ optimizedText: text.trim() });
 }
 
@@ -3469,6 +3566,8 @@ async function handleGenerateWorldSetting(
       .set({ worldSetting: worldSetting.trim(), updatedAt: new Date() })
       .where(eq(projects.id, projectId));
 
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId || "", "world_setting", projectId);
     return NextResponse.json({ worldSetting: worldSetting.trim() });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -3546,6 +3645,8 @@ async function handleBatchRefImageGenerate(
           characters: entry.characters ?? undefined,
         });
         generated++;
+        // 扣费：每张参考图生成成功后扣费
+        await chargeForAIUse(userId, "ref_image", shot.id);
         console.log(`[BatchRefImage] Shot ${shot.sequence}: generated ref image "${entry.id}"`);
       } catch (err) {
         failed++;
@@ -3612,6 +3713,8 @@ async function handleSingleRefImageGenerate(
       characters: entry.characters ?? undefined,
     });
 
+    // 扣费（试用期内跳过，LLM 调用成功后执行）
+    await chargeForAIUse(userId, "ref_image", shotId);
     return NextResponse.json({ ok: true, imagePath });
   } catch (err) {
     return NextResponse.json({ error: `Generation failed: ${err}` }, { status: 500 });
@@ -3690,6 +3793,8 @@ async function handleGenerateRefPrompts(
         }
       }
       console.log(`[RefImagePrompts Agent] Saved ${savedCount} reference prompts`);
+      // 扣费（试用期内跳过，LLM 调用成功后执行）
+      await chargeForAIUse(userId, "ref_prompts", projectId);
       return NextResponse.json({ updatedCount: refParsed.length, totalShots: refAgentShots.length });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -3920,6 +4025,8 @@ async function handleGenerateRefPrompts(
     console.warn(`[GenerateRefPrompts] ${failed.length} shots failed:`, failed);
   }
   console.log(`[GenerateRefPrompts] Updated ${updatedCount}/${total} shots (sequential batched)`);
+  // 扣费（试用期内跳过，LLM 调用成功后执行）
+  await chargeForAIUse(userId, "ref_prompts", projectId);
   return NextResponse.json({ updatedCount, totalShots: total });
 }
 
@@ -3981,6 +4088,8 @@ async function handleSingleShotRefImageGenerateAll(
         characters: entry.characters ?? undefined,
       });
       generated++;
+      // 扣费：每张参考图生成成功后扣费
+      await chargeForAIUse(userId, "ref_image", shotId);
       console.log(`[RefImageGenAll] Shot ${shot.sequence}: generated ref "${entry.id}"`);
     } catch (err) {
       console.warn(`[RefImageGenAll] Shot ${shot.sequence} ref ${entry.id} failed:`, err);
@@ -4055,6 +4164,8 @@ async function handleGenerateKeyframePrompts(
         }
       }
       console.log(`[KeyframePrompts Agent] Saved ${savedCount} assets from ${kpParsed.length} shots`);
+      // 扣费（试用期内跳过，LLM 调用成功后执行）
+      await chargeForAIUse(userId, "keyframe_prompts", projectId);
       return NextResponse.json({ updatedCount: kpParsed.length, totalShots: kpAgentShots.length });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -4231,5 +4342,7 @@ async function handleGenerateKeyframePrompts(
     console.warn(`[GenerateKeyframePrompts] ${failed.length} shots failed:`, failed);
   }
   console.log(`[GenerateKeyframePrompts] Updated ${updatedCount}/${allShots.length} shots (concurrent)`);
+  // 扣费（试用期内跳过，LLM 调用成功后执行）
+  await chargeForAIUse(userId, "keyframe_prompts", projectId);
   return NextResponse.json({ updatedCount, totalShots: allShots.length });
 }

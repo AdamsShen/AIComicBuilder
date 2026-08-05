@@ -3,6 +3,7 @@ import { stripe } from "@/lib/stripe";
 import { getSession } from "@/lib/auth/get-session";
 import { db } from "@/lib/db";
 import { walletRecharges } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { id as genId } from "@/lib/id";
 
 export async function POST(request: Request) {
@@ -62,6 +63,13 @@ export async function POST(request: Request) {
       payment_method_types: ["card", "link"],
       billing_address_collection: "auto",
     });
+
+    // 保存 provider_session_id，以便 webhook 未到达时可以通过 sync 接口兜底
+    await db
+      .update(walletRecharges)
+      .set({ providerSessionId: checkoutSession.id })
+      .where(eq(walletRecharges.outTradeNo, outTradeNo))
+      .run();
 
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {

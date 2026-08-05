@@ -7,7 +7,6 @@ import { ArrowLeft } from "lucide-react";
 import { BalanceCard } from "./_components/balance-card";
 import { TransactionList } from "./_components/transaction-list";
 import { RechargeDialog } from "./_components/recharge-dialog";
-import { CheckoutSuccessToast } from "@/components/pricing/checkout-success-toast";
 import { Suspense } from "react";
 
 interface WalletRecord {
@@ -64,7 +63,10 @@ function WalletPageInner() {
   useEffect(() => {
     const recharge = searchParams.get("recharge");
     if (recharge === "success") {
-      fetchData();
+      // 先调用 sync 兜底接口同步 Stripe 支付状态，再刷新钱包数据
+      fetch("/api/wallet/recharge/sync", { method: "POST" })
+        .catch(() => {})
+        .finally(() => fetchData());
     }
   }, [searchParams]);
 
@@ -118,7 +120,6 @@ function WalletPageInner() {
 export default function WalletPage() {
   return (
     <Suspense fallback={null}>
-      <CheckoutSuccessToast />
       <WalletPageInner />
     </Suspense>
   );

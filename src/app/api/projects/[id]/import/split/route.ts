@@ -9,6 +9,8 @@ import { getUserIdFromRequest } from "@/lib/get-user-id";
 import { addImportLog, chunkText } from "@/lib/import-utils";
 import { buildScriptSplitPrompt } from "@/lib/ai/prompts/script-split";
 import { resolvePrompt } from "@/lib/ai/prompts/resolver";
+import { canUseAI } from "@/lib/entitlement";
+import { chargeForAIUse } from "@/lib/ai-pricing";
 
 export const maxDuration = 300;
 
@@ -31,6 +33,9 @@ export async function POST(
 ) {
   const { id: projectId } = await params;
   const userId = await getUserIdFromRequest(request);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const [project] = await db
     .select()
@@ -50,6 +55,15 @@ export async function POST(
 
   if (!body.modelConfig?.text) {
     return NextResponse.json({ error: "No text model" }, { status: 400 });
+  }
+
+  // 试用到期 + 余额不足 → 禁止使用 AI
+  const canUse = await canUseAI(userId);
+  if (!canUse) {
+    return NextResponse.json(
+      { error: "试用已到期且余额不足，请先充值" },
+      { status: 402 }
+    );
   }
 
   const chunks = chunkText(body.text);
@@ -105,6 +119,8 @@ export async function POST(
       let eps: SplitEpisode[];
       try {
         eps = JSON.parse(extractJSON(result.text)) as SplitEpisode[];
+        // 扣费（试用期内跳过，LLM 调用成功后执行）
+        await chargeForAIUse(userId, "script_parse", projectId);
       } catch {
         console.error(`[ImportSplit] Chunk ${idx + 1} JSON parse failed. Raw output:\n${result.text.slice(0, 500)}...`);
         await addImportLog(
@@ -118,6 +134,8 @@ export async function POST(
           providerOptions: jsonMode,
         });
         eps = JSON.parse(extractJSON(retry.text)) as SplitEpisode[];
+        // 扣费（重试成功后执行）
+        await chargeForAIUse(userId, "script_parse", projectId);
       }
 
       allEpisodes.push(...(Array.isArray(eps) ? eps : []));

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { BalanceCard } from "./_components/balance-card";
 import { TransactionList } from "./_components/transaction-list";
 import { RechargeDialog } from "./_components/recharge-dialog";
@@ -26,7 +25,6 @@ const PAGE_SIZE = 20;
 
 function WalletPageInner() {
   const t = useTranslations("wallet");
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [data, setData] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,44 +74,27 @@ function WalletPageInner() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between border-b border-[--border-subtle] bg-white/80 backdrop-blur-xl px-4 lg:px-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-primary]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <span className="font-display text-sm font-semibold text-[--text-primary]">
-            {t("title")}
-          </span>
-        </div>
-      </header>
+    <>
+      <div className="mx-auto max-w-2xl space-y-6">
+        {/* Balance card */}
+        <BalanceCard
+          balance={data?.balance ?? 0}
+          onRecharge={() => setShowRecharge(true)}
+          loading={loading}
+        />
 
-      <main className="flex-1 bg-[--surface] p-6 lg:p-8">
-        <div className="mx-auto max-w-2xl space-y-6">
-          {/* Balance card */}
-          <BalanceCard
-            balance={data?.balance ?? 0}
-            onRecharge={() => setShowRecharge(true)}
-            loading={loading}
-          />
-
-          {/* Transaction list */}
-          <TransactionList
-            records={data?.records ?? []}
-            hasMore={hasMore}
-            onLoadMore={handleLoadMore}
-            loading={loadingMore}
-          />
-        </div>
-      </main>
+        {/* Transaction list */}
+        <TransactionList
+          records={data?.records ?? []}
+          hasMore={hasMore}
+          onLoadMore={handleLoadMore}
+          loading={loadingMore}
+        />
+      </div>
 
       {/* Recharge dialog */}
       <RechargeDialog open={showRecharge} onOpenChange={setShowRecharge} />
-    </div>
+    </>
   );
 }
 

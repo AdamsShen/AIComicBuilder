@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       }
 
       // Stripe 收美元，按汇率转为人民币分入账
-      const cnyAmount = Math.round(usdAmount * getUsdToCnyRate());
+      const cnyAmount = Math.round(usdAmount * await getUsdToCnyRate());
 
       await creditWalletRecharge({
         outTradeNo,

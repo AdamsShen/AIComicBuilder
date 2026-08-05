@@ -6,7 +6,12 @@ import { getTrialDurationDays, getTrialStatus, getBalance } from "@/lib/entitlem
 import { Clock, Zap, Wallet } from "lucide-react";
 import Link from "next/link";
 
-export default async function PricingPage() {
+export default async function PricingPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const session = await getSession();
   const trialDays = getTrialDurationDays();
   const isLoggedIn = !!session?.user;
@@ -39,7 +44,7 @@ export default async function PricingPage() {
           <GuestCta trialDays={trialDays} />
         ) : (
           /* 已登录：展示账户状态 + 钱包余额 + 充值入口 */
-          <LoggedInSection trialDays={trialDays} trialStatus={trialStatus} balance={balance} />
+          <LoggedInSection trialDays={trialDays} trialStatus={trialStatus} balance={balance} locale={locale} />
         )}
 
         <FAQSection />
@@ -53,6 +58,7 @@ function LoggedInSection({
   trialDays,
   trialStatus,
   balance,
+  locale,
 }: {
   trialDays: number;
   trialStatus: {
@@ -62,6 +68,7 @@ function LoggedInSection({
     endsAt: Date | null;
   } | null;
   balance: number;
+  locale: string;
 }) {
   const balanceYuan = (balance / 100).toFixed(2);
   const inTrial = trialStatus?.inTrial ?? false;
@@ -100,7 +107,7 @@ function LoggedInSection({
 
         {/* 充值按钮 */}
         <Link
-          href="/wallet"
+          href={`/${locale}/wallet`}
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-medium text-white shadow-lg shadow-primary/20 transition-all duration-200 hover:bg-[#E8573A] hover:shadow-xl hover:shadow-primary/30 active:scale-[0.97]"
         >
           <Zap className="h-4 w-4" />

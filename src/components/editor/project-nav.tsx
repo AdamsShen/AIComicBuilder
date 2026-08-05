@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
-import { FileText, Users, Film, Play, ArrowLeft } from "lucide-react";
+import { FileText, Users, Film, Play, ArrowLeft, Home } from "lucide-react";
 
 interface ProjectNavProps {
   projectId: string;
@@ -34,6 +34,13 @@ export function ProjectNav({ projectId, episodeId }: ProjectNavProps) {
           doesn't scroll with the main content on the right. */}
       <nav className="hidden w-60 flex-shrink-0 border-r border-[--border-subtle] bg-white lg:block self-start sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
         <div className="flex flex-col gap-1 p-3 pt-4">
+          <Link
+            href={`/${locale}`}
+            className="flex items-center gap-2 px-3 py-2 text-xs text-[--text-muted] hover:text-[--text-primary] rounded-lg hover:bg-[--surface] transition-colors"
+          >
+            <Home className="h-3.5 w-3.5" />
+            {t("home")}
+          </Link>
           <Link
             href={`/${locale}/project/${projectId}/episodes`}
             className="flex items-center gap-2 px-3 py-2 text-xs text-[--text-muted] hover:text-[--text-primary]"

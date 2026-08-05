@@ -6,7 +6,7 @@ import { useProjectStore } from "@/stores/project-store";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useLocale } from "next-intl";
-import { ArrowLeft, Loader2, Settings, Wand2 } from "lucide-react";
+import { ArrowLeft, Home, Loader2, Settings, Wand2 } from "lucide-react";
 import { LogoIcon } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { UserMenu } from "@/components/auth/user-menu";
@@ -46,8 +46,16 @@ export default function ProjectLayout({
           <Link
             href={`/${locale}`}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-all hover:bg-[--surface] hover:text-[--text-primary]"
+            title="返回主页"
           >
             <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <Link
+            href={`/${locale}`}
+            className="flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-medium text-[--text-muted] transition-all hover:bg-[--surface] hover:text-[--text-primary]"
+          >
+            <Home className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">主页</span>
           </Link>
           <div className="h-4 w-px bg-[--border-subtle]" />
           <div className="flex items-center gap-2">

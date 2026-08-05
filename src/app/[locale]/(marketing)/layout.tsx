@@ -3,18 +3,22 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoIcon } from "@/components/logo";
 import { UserMenu } from "@/components/auth/user-menu";
 import Link from "next/link";
+import { Home } from "lucide-react";
 
 export default async function MarketingLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }) {
+  const { locale } = await params;
   const t = await getTranslations("common");
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 flex h-14 flex-shrink-0 items-center justify-between border-b border-[--border-subtle] bg-white/80 backdrop-blur-xl px-4 lg:px-6">
-        <Link href="/" className="flex items-center gap-2 group">
+        <Link href={`/${locale}`} className="flex items-center gap-2 group">
           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[--primary]/10 text-[--primary]">
             <LogoIcon size={14} />
           </div>
@@ -24,7 +28,14 @@ export default async function MarketingLayout({
         </Link>
         <div className="flex items-center gap-2">
           <Link
-            href="/pricing"
+            href={`/${locale}`}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-primary]"
+            title={t("home")}
+          >
+            <Home className="h-4 w-4" />
+          </Link>
+          <Link
+            href={`/${locale}/pricing`}
             className="flex h-8 items-center rounded-lg px-3 text-xs text-[--text-secondary] transition-colors hover:bg-[--surface] hover:text-[--text-primary]"
           >
             {t("pricing")}

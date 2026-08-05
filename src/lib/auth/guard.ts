@@ -11,8 +11,8 @@ export async function requireAuth() {
 }
 
 /**
- * 进入项目页（dashboard）的门槛：已登录且已拥有套餐（免费或 Pro）。
- * 未登录 → 由 requireAuth 跳定价页；已登录但未选套餐 → 跳定价页停留选择。
+ * 进入项目页（dashboard）的门槛：已登录即可。
+ * 注册用户自动进入试用期，无需再选择免费/Pro 套餐。
  */
 export async function requirePlan() {
   const session = await requireAuth();

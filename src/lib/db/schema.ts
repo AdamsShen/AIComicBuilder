@@ -472,6 +472,9 @@ export const users = sqliteTable("users", {
   // 用户主动选择的套餐；null=尚未选择（需去定价页选），"free"=已选免费。
   // Pro 状态不写在这里，由订阅/支付宝订单派生（见 getMembership）。
   plan: text("plan", { enum: ["free", "pro"] }),
+  // 试用期结束时间；注册时自动设定（TRIAL_DURATION_DAYS 环境变量控制，默认 3 天）。
+  // null=未设置（老用户或跳过试用）。试用期内可免费使用所有 AI 功能无需扣费。
+  trialEndsAt: integer("trial_ends_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

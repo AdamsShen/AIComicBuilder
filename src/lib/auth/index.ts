@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
+import { getTrialDurationDays } from "@/lib/entitlement";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -31,5 +32,24 @@ export const auth = betterAuth({
   session: {
     expiresIn: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60,      // refresh cookie every 24h
+  },
+  // 注册时自动设定试用期结束时间（TRIAL_DURATION_DAYS 环境变量控制，默认 3 天）
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          const trialDays = getTrialDurationDays();
+          const trialEndsAt = new Date(
+            Date.now() + trialDays * 86_400_000,
+          );
+          return {
+            data: {
+              ...user,
+              trialEndsAt,
+            },
+          };
+        },
+      },
+    },
   },
 });

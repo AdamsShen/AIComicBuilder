@@ -88,8 +88,8 @@ export function UserMenu() {
     <>
       <div className="relative group">
         <button className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[--text-secondary] hover:bg-[--surface] hover:text-[--text-primary] transition-colors">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[--primary]/10 text-[--primary] text-[10px] font-semibold">
-            {session.user.email?.charAt(0).toUpperCase()}
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[--primary]/10 text-[--primary]">
+            <User className="h-3 w-3" />
           </div>
           <span className="max-w-[100px] truncate hidden sm:inline">
             {session.user.email}

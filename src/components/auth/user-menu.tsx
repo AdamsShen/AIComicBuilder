@@ -11,13 +11,17 @@ import {
 } from "@/components/ui/dialog";
 import { SignInDialog } from "./sign-in-dialog";
 import { useTranslations } from "next-intl";
-import { User, LogOut, CreditCard, RefreshCw, Loader2, Wallet as WalletIcon } from "lucide-react";
+import { User, LogOut, Wallet, Loader2, Clock, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface PlanState {
-  plan: "free" | "pro" | null;
-  isPro: boolean;
-  source: "stripe" | "alipay" | null;
+interface UserStatus {
+  trial: {
+    inTrial: boolean;
+    expired: boolean;
+    daysLeft: number;
+    endsAt: string | null;
+  };
+  balance: number; // 人民币分
 }
 
 export function UserMenu() {
@@ -25,30 +29,26 @@ export function UserMenu() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
   const [showSignIn, setShowSignIn] = useState(false);
-  const [planState, setPlanState] = useState<PlanState | null>(null);
-  const [cancelLoading, setCancelLoading] = useState(false);
-  // 挂载门控：SSR 与首帧客户端渲染保持一致（都显示加载态），
-  // 挂载后再切换到 useSession 的真实状态，避免 hydration 不匹配。
+  const [status, setStatus] = useState<UserStatus | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 拉取套餐状态，决定显示"账单管理"(Pro) 还是"取消订阅"(免费)
+  // 拉取试用状态 + 钱包余额
   useEffect(() => {
     const userId = session?.user?.id;
-    // 用户变化时先清空，避免切换账号/刷新时残留上一用户的状态
-    setPlanState(null);
+    setStatus(null);
     if (!userId) return;
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/plan");
+        const res = await fetch("/api/user/status");
         if (!res.ok) return;
-        const data = (await res.json()) as PlanState;
-        if (!cancelled) setPlanState(data);
+        const data = (await res.json()) as UserStatus;
+        if (!cancelled) setStatus(data);
       } catch {
-        // 忽略：拿不到状态时不显示套餐相关按钮
+        // 静默失败：拿不到状态时不显示额外信息
       }
     })();
     return () => {
@@ -56,21 +56,8 @@ export function UserMenu() {
     };
   }, [session?.user?.id]);
 
-  // 免费用户取消订阅：清空套餐 → 回定价页重新选择/购买 Pro
-  async function handleCancelPlan() {
-    setCancelLoading(true);
-    try {
-      const res = await fetch("/api/plan/cancel", { method: "POST" });
-      if (res.ok) {
-        window.location.href = "/pricing";
-      } else {
-        setCancelLoading(false);
-      }
-    } catch (err) {
-      console.error("Cancel plan error:", err);
-      setCancelLoading(false);
-    }
-  }
+  // 余额转人民币元显示
+  const balanceYuan = status ? (status.balance / 100).toFixed(2) : null;
 
   if (!mounted || isPending) {
     return (
@@ -110,37 +97,52 @@ export function UserMenu() {
         </button>
 
         {/* Dropdown */}
-        <div className="absolute right-0 top-full mt-1 w-52 rounded-xl border border-[--border-subtle] bg-white shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+        <div className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-[--border-subtle] bg-white shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
           <div className="p-1.5">
-            {planState?.isPro ? (
-              <button
-                onClick={() => router.push("/billing")}
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-[--text-secondary] hover:bg-[--surface] hover:text-[--text-primary] transition-colors"
-              >
-                <CreditCard className="h-3.5 w-3.5" />
-                {t("billing")}
-              </button>
-            ) : planState?.plan === "free" ? (
-              <button
-                onClick={handleCancelPlan}
-                disabled={cancelLoading}
-                className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-[--text-secondary] hover:bg-[--surface] hover:text-[--text-primary] transition-colors"
-              >
-                {cancelLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3.5 w-3.5" />
-                )}
-                {t("cancelPlan")}
-              </button>
-            ) : null}
+            {/* 试用状态 */}
+            {status?.trial && (
+              <div className="px-2.5 py-2 mb-1 rounded-lg bg-[--surface]">
+                {status.trial.inTrial ? (
+                  <div className="flex items-center gap-2 text-xs text-green-600">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>
+                      {status.trial.daysLeft > 0
+                        ? `${status.trial.daysLeft} ${t("trialDaysLeft")}`
+                        : t("trialEndsToday")}
+                    </span>
+                  </div>
+                ) : status.trial.expired ? (
+                  <div className="flex items-center gap-2 text-xs text-orange-500">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{t("trialExpired")}</span>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* 钱包余额 */}
+            {balanceYuan !== null && (
+              <div className="px-2.5 py-2 mb-1 rounded-lg bg-[--surface] flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs text-[--text-secondary]">
+                  <Wallet className="h-3.5 w-3.5" />
+                  <span>{t("balance")}</span>
+                </div>
+                <span className="text-xs font-semibold text-[--text-primary]">
+                  ¥{balanceYuan}
+                </span>
+              </div>
+            )}
+
             <button
               onClick={() => router.push("/wallet")}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs text-[--text-secondary] hover:bg-[--surface] hover:text-[--text-primary] transition-colors"
             >
-              <WalletIcon className="h-3.5 w-3.5" />
-              {t("wallet")}
+              <Zap className="h-3.5 w-3.5" />
+              {t("recharge")}
             </button>
+
+            <div className="my-1 border-t border-[--border-subtle]" />
+
             <button
               onClick={async () => {
                 await signOut();

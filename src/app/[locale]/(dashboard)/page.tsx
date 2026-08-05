@@ -1,18 +1,16 @@
 import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
-import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
-import { requirePlan } from "@/lib/auth/guard";
+import { requireAuth } from "@/lib/auth/guard";
 import { migrateAnonymousProjects } from "@/lib/auth/migrate-projects";
 import { ProjectCard } from "@/components/project-card";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
-import { CheckoutSuccessToast } from "@/components/pricing/checkout-success-toast";
 import { Clapperboard } from "lucide-react";
 
 export default async function DashboardPage() {
   const t = await getTranslations("dashboard");
-  const session = await requirePlan();
+  const session = await requireAuth();
   const userId = session.user.id;
 
   // 迁移匿名用户的项目到注册账户
@@ -26,9 +24,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="animate-page-in space-y-6">
-      <Suspense fallback={null}>
-        <CheckoutSuccessToast />
-      </Suspense>
       {/* Page header — same pattern as detail pages */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

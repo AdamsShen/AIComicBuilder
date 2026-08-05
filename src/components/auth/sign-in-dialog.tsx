@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +18,22 @@ import { Mail, Loader2, ArrowRight, CheckCircle } from "lucide-react";
 interface SignInDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** 初始是否为注册模式，默认 false（登录） */
+  initialSignUp?: boolean;
 }
 
-export function SignInDialog({ open, onOpenChange }: SignInDialogProps) {
+export function SignInDialog({ open, onOpenChange, initialSignUp = false }: SignInDialogProps) {
   const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(initialSignUp);
+
+  // 每次打开弹窗时同步 initialSignUp
+  useEffect(() => {
+    if (open) {
+      setIsSignUp(initialSignUp);
+    }
+  }, [open, initialSignUp]);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);

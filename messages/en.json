@@ -23,6 +23,7 @@
     "signIn": "Sign In",
     "wallet": "Wallet",
     "discordJoin": "Join Discord",
+    "home": "Home",
     "uploadFailed": "Upload failed. Please try again."
   },
   "dashboard": {
@@ -39,6 +40,7 @@
   },
   "project": {
     "title": "Project Title",
+    "home": "Home",
     "script": "Script",
     "idea": "Creative Idea",
     "worldSetting": "World Setting",

@@ -23,7 +23,8 @@
     "pricing": "定价",
     "signIn": "登录",
     "wallet": "钱包",
-    "discordJoin": "加入 Discord 讨论"
+    "discordJoin": "加入 Discord 讨论",
+    "home": "主页"
   },
   "dashboard": {
     "title": "我的项目",
@@ -39,6 +40,7 @@
   },
   "project": {
     "title": "项目标题",
+    "home": "主页",
     "script": "剧本",
     "idea": "创意构思",
     "worldSetting": "世界观设定",

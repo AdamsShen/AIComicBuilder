@@ -23,7 +23,8 @@
     "pricing": "料金",
     "signIn": "ログイン",
     "wallet": "ウォレット",
-    "discordJoin": "Discordに参加"
+    "discordJoin": "Discordに参加",
+    "home": "ホーム"
   },
   "dashboard": {
     "title": "マイプロジェクト",
@@ -39,6 +40,7 @@
   },
   "project": {
     "title": "プロジェクト名",
+    "home": "ホーム",
     "script": "脚本",
     "idea": "アイデア",
     "worldSetting": "世界観設定",

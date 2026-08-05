@@ -23,7 +23,8 @@
     "pricing": "요금제",
     "signIn": "로그인",
     "wallet": "지갑",
-    "discordJoin": "Discord 참여하기"
+    "discordJoin": "Discord 참여하기",
+    "home": "홈"
   },
   "dashboard": {
     "title": "내 프로젝트",
@@ -39,6 +40,7 @@
   },
   "project": {
     "title": "프로젝트 제목",
+    "home": "홈",
     "script": "각본",
     "idea": "아이디어",
     "worldSetting": "세계관 설정",

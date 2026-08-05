@@ -22,7 +22,8 @@
     "uploadFailed": "アップロードに失敗しました。もう一度お試しください。",
     "pricing": "料金",
     "signIn": "ログイン",
-    "wallet": "ウォレット"
+    "wallet": "ウォレット",
+    "discordJoin": "Discordに参加"
   },
   "dashboard": {
     "title": "マイプロジェクト",
@@ -553,48 +554,22 @@
     }
   },
   "pricing": {
-    "title": "プランを選択",
-    "subtitle": "無料で始めて、必要に応じてアップグレード。",
-    "monthly": "月払い",
-    "yearly": "年払い",
-    "savePercent": "{percent}%節約",
-    "popular": "人気",
-    "freePrice": "無料",
-    "perMonth": "/月",
-    "perYear": "/年",
-    "billedAnnually": "年額請求",
-    "or": "または",
-    "alipayCta": "Alipayで支払う",
-    "checkoutSuccess": "お支払いが完了しました。会員が有効になりました",
-    "free": {
-      "name": "無料版",
-      "price": "無料",
-      "feature1": "最大3プロジェクト",
-      "feature2": "基本AIモデル",
-      "feature3": "720p動画出力",
-      "feature4": "コミュニティサポート",
-      "cta": "無料で始める"
-    },
-    "pro": {
-      "name": "プロ版",
-      "priceMonthly": "$19",
-      "priceYearly": "$190",
-      "feature1": "無制限プロジェクト",
-      "feature2": "全AIモデル",
-      "feature3": "1080p動画出力",
-      "feature4": "優先生成キュー",
-      "feature5": "バッチフレーム生成",
-      "feature6": "メールサポート",
-      "cta": "今すぐ購読"
-    },
+    "title": "無料トライアル開始",
+    "subtitle": "新規登録で {days} 日間の無料トライアル。クレジットカード不要。",
+    "loggedInTitle": "アカウント",
+    "loggedInSubtitle": "従量課金制。使った分だけお支払い。",
+    "trialActive": "トライアル残り {days} 日",
+    "trialExpired": "トライアル期限切れ。チャージしてAI機能を引き続きご利用ください。",
+    "registerCta": "無料トライアルを始める",
+    "loginCta": "アカウントをお持ちの方：ログイン",
     "faq": {
       "title": "よくある質問",
-      "q1": "いつでも解約できますか？",
-      "a1": "はい、請求設定からいつでも解約できます。現在の請求期間が終了するまで引き続きアクセスできます。",
-      "q2": "ダウングレードするとプロジェクトはどうなりますか？",
-      "a2": "プロジェクトは完全に保持されます。無料枠を超える新規プロジェクトはアップグレードするまで作成できません。",
-      "q3": "返金は可能ですか？",
-      "a3": "新規登録者向けに7日間の返金保証を提供しています。初回支払いから7日以内にお問い合わせください。"
+      "q1": "無料トライアルの仕組みは？",
+      "a1": "新規登録後、自動的に3日間の無料トライアルが付与され、すべてのAI機能を利用できます。クレジットカードは不要です。",
+      "q2": "トライアル終了後は？",
+      "a2": "トライアル終了後は、ウォレットにチャージしてAI機能を継続利用できます。使用した分だけ課金されます。",
+      "q3": "AI操作の料金は？",
+      "a3": "操作によって料金が異なります：脚本生成 約¥0.50、画像生成 約¥2.00、動画生成 約¥5.00。正確な料金は各機能の使用時に表示されます。"
     }
   },
   "auth": {
@@ -614,59 +589,12 @@
     "billing": "サブスクリプション",
     "cancelPlan": "プランを解約",
     "manageSubscription": "サブスクリプション管理",
-    "wallet": "ウォレット"
-  },
-  "billing": {
-    "title": "サブスクリプション",
-    "back": "戻る",
-    "empty": "サブスクリプションがありません",
-    "loading": "読み込みに失敗しました",
-    "detailTitle": "サブスクリプション詳細",
-    "stripeLabel": "Stripe",
-    "alipayLabel": "Alipay",
-    "subscription": {
-      "withMonthly": "Stripe · 月額",
-      "withYearly": "Stripe · 年額",
-      "alipayMonthly": "Alipay · 月額",
-      "alipayYearly": "Alipay · 年額"
-    },
-    "interval": {
-      "month": "月",
-      "year": "年"
-    },
-    "status": {
-      "active": "有効",
-      "trialing": "トライアル中",
-      "past_due": "延滞",
-      "canceled": "解約済み",
-      "incomplete": "未完了",
-      "incomplete_expired": "期限切れ",
-      "unpaid": "未払い",
-      "expired": "期限切れ"
-    },
-    "dateLabel": {
-      "expires": "有効期限",
-      "canceledAt": "解約日",
-      "createdAt": "作成日",
-      "paidAt": "支払日"
-    },
-    "detail": {
-      "subscriptionId": "サブスクリプション ID",
-      "status": "ステータス",
-      "interval": "周期",
-      "periodStart": "期間開始",
-      "periodEnd": "期間終了",
-      "canceledAt": "解約日時",
-      "createdAt": "作成日時",
-      "cancelNotice": "現在の期間終了後にサブスクリプションが解約されます",
-      "orderNo": "注文番号",
-      "alipayTradeNo": "Alipay 取引番号",
-      "amount": "金額",
-      "startTime": "開始日時",
-      "endTime": "終了日時",
-      "payTime": "支払日時"
-    },
-    "stripePortal": "サブスクリプション管理（Stripe ポータル）"
+    "wallet": "ウォレット",
+    "trialDaysLeft": "日の無料トライアル残り",
+    "trialEndsToday": "本日トライアル終了",
+    "trialExpired": "トライアル期限切れ。チャージして続行してください。",
+    "balance": "残高",
+    "recharge": "チャージ"
   },
   "wallet": {
     "title": "ウォレット",

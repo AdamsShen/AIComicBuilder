@@ -22,7 +22,8 @@
     "uploadFailed": "上传失败，请重试",
     "pricing": "定价",
     "signIn": "登录",
-    "wallet": "钱包"
+    "wallet": "钱包",
+    "discordJoin": "加入 Discord 讨论"
   },
   "dashboard": {
     "title": "我的项目",
@@ -554,48 +555,22 @@
     }
   },
   "pricing": {
-    "title": "选择适合你的方案",
-    "subtitle": "免费开始，需要更多功能时升级。",
-    "monthly": "月付",
-    "yearly": "年付",
-    "savePercent": "省 {percent}%",
-    "popular": "最受欢迎",
-    "freePrice": "免费",
-    "perMonth": "/月",
-    "perYear": "/年",
-    "billedAnnually": "按年计费",
-    "or": "或",
-    "alipayCta": "支付宝支付",
-    "checkoutSuccess": "支付成功，会员已开通",
-    "free": {
-      "name": "免费版",
-      "price": "免费",
-      "feature1": "最多 3 个项目",
-      "feature2": "基础 AI 模型",
-      "feature3": "720p 视频导出",
-      "feature4": "社区支持",
-      "cta": "免费开始"
-    },
-    "pro": {
-      "name": "专业版",
-      "priceMonthly": "¥19",
-      "priceYearly": "¥190",
-      "feature1": "无限项目",
-      "feature2": "全部 AI 模型（GPT-4o、Claude、Gemini）",
-      "feature3": "1080p 视频导出",
-      "feature4": "优先生成队列",
-      "feature5": "批量帧生成",
-      "feature6": "邮件支持",
-      "cta": "立即订阅"
-    },
+    "title": "开始免费试用",
+    "subtitle": "新用户注册即享 {days} 天免费试用，无需绑定信用卡。",
+    "loggedInTitle": "你的账户",
+    "loggedInSubtitle": "按量计费，用多少付多少。",
+    "trialActive": "试用剩余 {days} 天",
+    "trialExpired": "试用已到期。请充值后继续使用 AI 功能。",
+    "registerCta": "开始免费试用",
+    "loginCta": "已有账户？去登录",
     "faq": {
       "title": "常见问题",
-      "q1": "可以随时取消吗？",
-      "a1": "可以，你可以随时在账单设置中取消订阅。取消后在当前计费周期结束前仍可继续使用。",
-      "q2": "降级后我的项目会怎样？",
-      "a2": "你的项目完全保留可访问。只是不能创建超过免费版限额的新项目，直到你重新升级。",
-      "q3": "支持退款吗？",
-      "a3": "我们为新用户提供 7 天无理由退款保证。首次支付后 7 天内联系我们即可全额退款。"
+      "q1": "免费试用如何运作？",
+      "a1": "新用户注册后自动获得 3 天免费试用期，可使用全部 AI 功能，无需绑定信用卡。",
+      "q2": "试用结束后怎么办？",
+      "a2": "试用到期后需充值钱包才能继续使用 AI 功能。按量计费，每次 AI 操作收取小额费用。",
+      "q3": "AI 操作如何收费？",
+      "a3": "不同操作定价不同：剧本生成约 ¥0.50，图片生成约 ¥2.00，视频生成约 ¥5.00。具体价格使用各功能时可查看。"
     }
   },
   "auth": {
@@ -615,59 +590,12 @@
     "billing": "订阅管理",
     "cancelPlan": "取消订阅",
     "manageSubscription": "管理订阅",
-    "wallet": "钱包"
-  },
-  "billing": {
-    "title": "订阅管理",
-    "back": "返回",
-    "empty": "暂无订阅记录",
-    "loading": "加载失败",
-    "detailTitle": "订阅详情",
-    "stripeLabel": "Stripe 订阅",
-    "alipayLabel": "支付宝",
-    "subscription": {
-      "withMonthly": "Stripe 订阅 · 月付",
-      "withYearly": "Stripe 订阅 · 年付",
-      "alipayMonthly": "支付宝 · 月付会员",
-      "alipayYearly": "支付宝 · 年付会员"
-    },
-    "interval": {
-      "month": "月",
-      "year": "年"
-    },
-    "status": {
-      "active": "有效",
-      "trialing": "试用中",
-      "past_due": "逾期",
-      "canceled": "已取消",
-      "incomplete": "未完成",
-      "incomplete_expired": "已过期",
-      "unpaid": "未支付",
-      "expired": "已过期"
-    },
-    "dateLabel": {
-      "expires": "到期",
-      "canceledAt": "取消于",
-      "createdAt": "创建于",
-      "paidAt": "支付于"
-    },
-    "detail": {
-      "subscriptionId": "订阅 ID",
-      "status": "状态",
-      "interval": "周期",
-      "periodStart": "当前周期开始",
-      "periodEnd": "当前周期结束",
-      "canceledAt": "取消时间",
-      "createdAt": "创建时间",
-      "cancelNotice": "订阅将于当前周期结束后取消",
-      "orderNo": "订单号",
-      "alipayTradeNo": "支付宝交易号",
-      "amount": "金额",
-      "startTime": "开始时间",
-      "endTime": "到期时间",
-      "payTime": "支付时间"
-    },
-    "stripePortal": "管理订阅（Stripe 门户）"
+    "wallet": "钱包",
+    "trialDaysLeft": "天试用剩余",
+    "trialEndsToday": "试用今天到期",
+    "trialExpired": "试用已到期，请充值后继续使用",
+    "balance": "余额",
+    "recharge": "充值"
   },
   "wallet": {
     "title": "钱包",

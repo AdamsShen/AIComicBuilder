@@ -22,6 +22,7 @@
     "pricing": "Pricing",
     "signIn": "Sign In",
     "wallet": "Wallet",
+    "discordJoin": "Join Discord",
     "uploadFailed": "Upload failed. Please try again."
   },
   "dashboard": {
@@ -553,48 +554,22 @@
     }
   },
   "pricing": {
-    "title": "Choose Your Plan",
-    "subtitle": "Start free, upgrade when you need more power.",
-    "monthly": "Monthly",
-    "yearly": "Yearly",
-    "savePercent": "Save {percent}%",
-    "popular": "Most Popular",
-    "freePrice": "Free",
-    "perMonth": "mo",
-    "perYear": "yr",
-    "billedAnnually": "billed annually",
-    "or": "or",
-    "alipayCta": "Pay with Alipay",
-    "checkoutSuccess": "Payment successful — membership activated",
-    "free": {
-      "name": "Free",
-      "price": "Free",
-      "feature1": "Up to 3 projects",
-      "feature2": "Basic AI models",
-      "feature3": "720p video export",
-      "feature4": "Community support",
-      "cta": "Get Started"
-    },
-    "pro": {
-      "name": "Pro",
-      "priceMonthly": "$19",
-      "priceYearly": "$190",
-      "feature1": "Unlimited projects",
-      "feature2": "All AI models (GPT-4o, Claude, Gemini)",
-      "feature3": "1080p video export",
-      "feature4": "Priority generation queue",
-      "feature5": "Batch frame generation",
-      "feature6": "Email support",
-      "cta": "Subscribe Now"
-    },
+    "title": "Start Free Trial",
+    "subtitle": "New users get {days}-day free trial. No credit card required.",
+    "loggedInTitle": "Your Account",
+    "loggedInSubtitle": "Pay as you go. Only pay for what you use.",
+    "trialActive": "{days} days left in trial",
+    "trialExpired": "Trial expired. Recharge to continue using AI features.",
+    "registerCta": "Start Free Trial",
+    "loginCta": "Already have an account? Sign In",
     "faq": {
       "title": "Frequently Asked Questions",
-      "q1": "Can I cancel anytime?",
-      "a1": "Yes, you can cancel your subscription at any time from your billing settings. You will continue to have access until the end of your billing period.",
-      "q2": "What happens to my projects if I downgrade?",
-      "a2": "Your projects remain fully accessible. You just can't create new projects beyond the free tier limit until you upgrade again.",
-      "q3": "Do you offer refunds?",
-      "a3": "We offer a 7-day money-back guarantee for new subscribers. Contact us within 7 days of your first payment for a full refund."
+      "q1": "How does the free trial work?",
+      "a1": "New users automatically get a 3-day free trial with access to all AI features. No credit card required.",
+      "q2": "What happens after the trial?",
+      "a2": "After your trial ends, you need to recharge your wallet to continue using AI features. You only pay for what you use.",
+      "q3": "How much do AI operations cost?",
+      "a3": "Pricing varies by operation: script generation ~¥0.50, image generation ~¥2.00, video generation ~¥5.00. Exact prices are shown when using each feature."
     }
   },
   "auth": {
@@ -614,59 +589,12 @@
     "billing": "Subscription",
     "cancelPlan": "Cancel plan",
     "manageSubscription": "Manage Subscription",
-    "wallet": "Wallet"
-  },
-  "billing": {
-    "title": "Subscription",
-    "back": "Back",
-    "empty": "No subscriptions",
-    "loading": "Failed to load",
-    "detailTitle": "Subscription Details",
-    "stripeLabel": "Stripe",
-    "alipayLabel": "Alipay",
-    "subscription": {
-      "withMonthly": "Stripe · Monthly",
-      "withYearly": "Stripe · Yearly",
-      "alipayMonthly": "Alipay · Monthly",
-      "alipayYearly": "Alipay · Yearly"
-    },
-    "interval": {
-      "month": "mo",
-      "year": "yr"
-    },
-    "status": {
-      "active": "Active",
-      "trialing": "Trialing",
-      "past_due": "Past Due",
-      "canceled": "Canceled",
-      "incomplete": "Incomplete",
-      "incomplete_expired": "Expired",
-      "unpaid": "Unpaid",
-      "expired": "Expired"
-    },
-    "dateLabel": {
-      "expires": "Expires",
-      "canceledAt": "Canceled",
-      "createdAt": "Created",
-      "paidAt": "Paid"
-    },
-    "detail": {
-      "subscriptionId": "Subscription ID",
-      "status": "Status",
-      "interval": "Interval",
-      "periodStart": "Period Start",
-      "periodEnd": "Period End",
-      "canceledAt": "Canceled At",
-      "createdAt": "Created At",
-      "cancelNotice": "Subscription will be canceled at the end of the current period",
-      "orderNo": "Order No.",
-      "alipayTradeNo": "Alipay Trade No.",
-      "amount": "Amount",
-      "startTime": "Start",
-      "endTime": "End",
-      "payTime": "Paid At"
-    },
-    "stripePortal": "Manage Subscription (Stripe Portal)"
+    "wallet": "Wallet",
+    "trialDaysLeft": "trial days left",
+    "trialEndsToday": "Trial ends today",
+    "trialExpired": "Trial expired. Please recharge to continue.",
+    "balance": "Balance",
+    "recharge": "Recharge"
   },
   "wallet": {
     "title": "Wallet",

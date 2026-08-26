@@ -1,7 +1,7 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm (pinned to 10 to match pnpm-lock.yaml; pnpm 11 requires Node 22+)
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 # Install ffmpeg with libass for subtitle burn-in, and fonts for CJK subtitles
 RUN apk add --no-cache ffmpeg font-noto-cjk
